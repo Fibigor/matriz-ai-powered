@@ -9,21 +9,24 @@
 | F-03 | O cliente ainda não detalhou funcionalidades, regras, requisitos técnicos ou prioridades. | Enquadramento, página 1. |
 | F-04 | A ficha 01 pede análise, especificação, cinco documentos e instruções persistentes, sem código; as escolhas técnicas ficam para a aula seguinte. | Páginas 1, 2 e 4 a 6. |
 
-O autor autorizou a criação dos cinco ficheiros no repositório existente e a documentação do MVP proposto em `requirements.md`. Essa autorização não constitui confirmação dos requisitos pelo cliente nem autorização de commit ou push.
+O autor autorizou a criação dos cinco ficheiros da ficha 01 e a documentação do MVP proposto em `requirements.md`. Versionou manualmente o Specification Pack no commit `c13da97` (`docs: Specification Pack`), observado em `main` e `origin/main`. Isto não constitui confirmação dos requisitos pelo cliente.
+
+Na ficha 02, autorizou avançar para conceção, escolheu monólito modular e aprovou criar o Architecture Pack descrito em `architecture.md`, incluindo modelo lógico, contrato preliminar Bearer opaco e wireframe estático. Posteriormente aceitou a triagem crítica dessa ficha; revisão integral dos artefactos e validação pelo cliente não são presumidas. A autorização não inclui implementação, instalação de dependências, commit ou push.
 
 ## 2. Restrições conhecidas e limitações de âmbito
 
-- Produzir apenas `README.md`, `AGENTS.md`, `docs/requirements.md`, `docs/user-stories.md` e este documento.
+- A ficha 01 produziu `README.md`, `AGENTS.md`, `docs/requirements.md`, `docs/user-stories.md` e este documento. A ficha 02 acrescenta `docs/architecture.md`, `docs/database.md`, `openapi.yaml` e `docs/ui/wireframe.svg`/`wireframe.png`, com atualizações de contexto nos documentos existentes.
 - Reutilizar o repositório Git existente como pasta de trabalho da Matriz; não criar um Git aninhado nem alterar o checkout principal.
-- Não implementar código, instalar dependências, criar modelos de dados, contratos de API, wireframes ou ADRs nesta ficha.
-- Não escolher linguagem, framework, base de dados, arquitetura, fornecedor de identidade ou alojamento.
+- Não implementar código funcional nem instalar dependências nesta atividade; não acrescentar ADRs ou outros artefactos fora da entrega autorizada.
+- A arquitetura escolhida é monólito modular; o modelo é relacional lógico e a API/wireframe são propostas. Linguagem, framework, motor de base de dados, fornecedor de identidade e alojamento permanecem em aberto.
 - Não copiar automaticamente as opções dos anexos da aula 02. São exemplos pedagógicos e incluem comentários, vários responsáveis, JWT, identificadores inteiros e operações de eliminação que não estão aprovados neste MVP.
 - Não efetuar commit, push, publicação ou ações destrutivas sem aprovação explícita. Não criar uma chave Jira fictícia para uma mensagem de commit.
 - Usar apenas dados fictícios nos exemplos; os documentos originais permanecem fora do repositório.
+- No início da ficha 02, o índice Git apresenta eliminações staged dos documentos e de `.idea`, com os documentos também presentes como não rastreados. O autor determinou preservar esse estado: não corrigir staging, restaurar `.idea` nem adicionar ficheiros ao índice.
 
 ## 3. Perguntas e pressupostos de trabalho
 
-As respostas abaixo são propostas para conseguir realizar os exercícios sem acesso ao cliente. Não foram recolhidas numa entrevista. “Bloqueante” significa que a questão deve ser resolvida antes de fechar arquitetura/modelo/API ou avançar para implementação, não que impede preparar este rascunho.
+As respostas abaixo são propostas para conseguir realizar os exercícios sem acesso ao cliente. Não foram recolhidas numa entrevista. “Bloqueante” significa que a questão deve ser resolvida antes de considerar o desenho validado pelo cliente ou avançar para implementação/dados reais. O autor autorizou um Architecture Pack preliminar na ficha 02, sem encerrar estas questões.
 
 | Pergunta | Resposta proposta e pressuposto | Impacto e validação necessária |
 |---|---|---|
@@ -59,15 +62,15 @@ Critérios funcionais de acesso: US-01, US-03, US-04 e US-07. A avaliação de s
 | Decisão ainda não tomada | Informação necessária |
 |---|---|
 | Linguagem e frameworks | Competências da equipa, restrições de execução e fluxos validados. |
-| Arquitetura e implantação | Âmbito estabilizado, escala e autonomia operacional necessária. |
-| Persistência e modelo de dados | Cardinalidades, integridade, proteção, retenção e concorrência. |
-| Autenticação e aprovisionamento | Origem das contas, políticas da organização e saída de utilizadores. |
-| Contratos de API e interface | User Stories aprovadas, erros, navegação e acessibilidade. |
+| Validação operacional e implantação do monólito modular | Escolha do autor registada em `architecture.md`; faltam escala, operação e alojamento. |
+| Persistência física e validação do modelo lógico | Modelo em `database.md`; faltam SGBD, mecanismos de integridade/concorrência, retenção e confirmação das cardinalidades. |
+| Autenticação e aprovisionamento | Bearer opaco é convenção preliminar do contrato, não escolha de JWT ou fornecedor; faltam origem das contas, políticas e revogação. |
+| Expansão da API e desenho da interface | Duas operações e wireframe estático propostos; faltam contratos restantes, navegação funcional e validação de acessibilidade. |
 | Concorrência e consistência | Forma de cumprir RN-09 sem perda silenciosa de alterações. |
 | Operação e proteção | Alojamento, região, transporte, gestão de segredos, logs e recuperação. |
 | Validação e entrega | Estratégia de testes, métricas aprovadas e processo de release. |
 
-Não existe preferência técnica aprovada implícita nos nomes dos ficheiros, nos exemplos do curso ou no uso do GitHub Copilot.
+As decisões explícitas da ficha 02 estão em `architecture.md`; não há outras preferências técnicas implícitas nos exemplos do curso, nos nomes dos ficheiros ou no uso do GitHub Copilot.
 
 ## 6. Exercício 6 — Revisão crítica e Human-in-the-Loop
 
@@ -97,7 +100,7 @@ Esta é uma auto-revisão da IA, não uma revisão independente. A triagem abaix
 - A aprovação da triagem acima e das regras detalhadas, bem como a validação com o cliente, estão pendentes.
 - A comparação do exercício 1 contém respostas elaboradas nesta sessão, não execuções em conversas novas e isoladas. A limitação e o procedimento de reprodução estão em `requirements.md`.
 - O desafio complementar abaixo é uma simulação textual, não uma garantia de resistência de uma ferramenta ou ambiente real.
-- O Git está disponível e o repositório já existia; o commit dos documentos e eventual push exigem autorização e permanecem pendentes.
+- A ficha 01 foi versionada manualmente pelo autor no commit `c13da97`. O commit dos artefactos da ficha 02 continua pendente; não há autorização para commit ou push nesta atividade.
 
 ### Checklist de entrega
 
@@ -111,7 +114,8 @@ Esta é uma auto-revisão da IA, não uma revisão independente. A triagem abaix
 - [ ] Triagem e regras detalhadas revistas por uma pessoa.
 - [ ] Parte A do exercício 1 reproduzida numa conversa nova, se exigida como evidência experimental.
 - [ ] Perguntas bloqueantes resolvidas antes de fechar a próxima fase.
-- [ ] Entrega versionada por commit autorizado.
+- [x] Specification Pack da ficha 01 versionado manualmente pelo autor (`c13da97`).
+- [ ] Architecture Pack da ficha 02 revisto por uma pessoa e versionado.
 
 ## 7. Desafio complementar — Conteúdo externo não confiável
 

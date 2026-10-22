@@ -3,7 +3,8 @@
 ## Contexto e fontes
 
 - Antes de atuar, ler `README.md`, `docs/requirements.md`, `docs/constraints.md` e as User Stories relevantes em `docs/user-stories.md`.
-- O projeto está na fase de especificação da ficha 01. Não implementar código nem escolher tecnologias sem autorização explícita para avançar de fase.
+- O projeto está na fase de conceção da ficha 02, sem código funcional. Consultar também `docs/architecture.md`, `docs/database.md`, `openapi.yaml` e `docs/ui/wireframe.svg` quando relevantes.
+- O autor escolheu monólito modular para este exercício. Respeitar essa decisão e as limitações do contrato parcial; não escolher stack, motor de base de dados ou fornecedor de identidade, nem implementar código sem nova autorização.
 - Distinguir factos confirmados, âmbito proposto e pressupostos. Uma proposta documentada não é uma decisão do cliente; não promover o seu estado sem validação humana.
 - Não inventar funcionalidades, permissões, limites ou decisões técnicas. Perante lacunas ou contradições, explicitar a dúvida e pedir esclarecimento antes de uma alteração que dela dependa.
 

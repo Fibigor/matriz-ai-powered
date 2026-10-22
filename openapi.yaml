@@ -1,0 +1,434 @@
+openapi: 3.1.0
+info:
+  title: Matriz — Contrato parcial de tarefas
+  version: 0.2.0
+  description: |
+    Architecture Pack da ficha 02. Duas operações propostas, sem servidor implementado.
+    Base: docs/requirements.md, docs/user-stories.md e docs/architecture.md.
+    Não é a API completa do MVP.
+
+    Bearer opaco é uma convenção preliminar do contrato; não escolhe JWT,
+    fornecedor de identidade ou fluxo de autenticação. A conta deve estar ativa.
+    A participação no projeto é verificada em cada operação, independentemente do token.
+    Identificadores são texto opaco, sem formato físico imposto.
+    Os exemplos são fictícios. Datas de resposta são instantes UTC.
+tags:
+  - name: Tarefas
+    description: Consulta paginada e criação de tarefas de um projeto autorizado.
+security:
+  - BearerAuth: []
+paths:
+  /projects/{projectId}/tasks:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [Tarefas]
+      operationId: listProjectTasks
+      summary: Consultar tarefas e progresso de um projeto
+      description: |
+        Participantes ativos (gestor ou membro) podem consultar.
+        Ordenação estável por createdAt ascendente e, em empate, id ascendente.
+        Não existem pesquisa nem filtros neste contrato.
+        items é paginado; progress conta todas as tarefas do projeto.
+        Contexto, página, total e progresso refletem o mesmo retrato dos dados.
+        Página além da última devolve items vazio e mantém total e progresso.
+        Sem tarefas, totalPages é 0, items vazio e todas as contagens são 0.
+      parameters:
+        - name: page
+          in: query
+          description: Página pretendida, começando em 1.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          description: Dimensão da página; limite proposto para este contrato.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Página autorizada e progresso global do projeto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskPage'
+              example:
+                project:
+                  id: proj-alfa
+                  name: Alfa
+                  description: Preparação do MVP da Matriz
+                  currentRole: MANAGER
+                items:
+                  - id: task-01
+                    projectId: proj-alfa
+                    title: Definir âmbito
+                    description: Delimitar o MVP.
+                    status: DONE
+                    assignee: {userId: user-ana, displayName: Ana}
+                    version: 2
+                    createdAt: '2026-10-22T10:00:00Z'
+                    updatedAt: '2026-10-22T11:00:00Z'
+                  - id: task-02
+                    projectId: proj-alfa
+                    title: Rever requisitos
+                    description: Rever os critérios de aceitação.
+                    status: DONE
+                    assignee: {userId: user-bruno, displayName: Bruno}
+                    version: 2
+                    createdAt: '2026-10-22T10:01:00Z'
+                    updatedAt: '2026-10-22T11:01:00Z'
+                  - id: task-03
+                    projectId: proj-alfa
+                    title: Desenhar modelo
+                    description: Propor entidades e relações.
+                    status: IN_PROGRESS
+                    assignee: {userId: user-ana, displayName: Ana}
+                    version: 2
+                    createdAt: '2026-10-22T10:02:00Z'
+                    updatedAt: '2026-10-22T11:02:00Z'
+                  - id: task-04
+                    projectId: proj-alfa
+                    title: Preparar contrato
+                    description: Documentar as duas operações.
+                    status: TODO
+                    assignee: null
+                    version: 1
+                    createdAt: '2026-10-22T10:03:00Z'
+                    updatedAt: '2026-10-22T10:03:00Z'
+                  - id: task-05
+                    projectId: proj-alfa
+                    title: Validar protótipo
+                    description: Rever a correspondência com o MVP.
+                    status: TODO
+                    assignee: {userId: user-carla, displayName: Carla}
+                    version: 2
+                    createdAt: '2026-10-22T10:04:00Z'
+                    updatedAt: '2026-10-22T11:04:00Z'
+                pagination: {page: 1, pageSize: 20, totalItems: 5, totalPages: 1}
+                progress: {total: 5, todo: 2, inProgress: 1, done: 2, completedPercent: 40}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+    post:
+      tags: [Tarefas]
+      operationId: createProjectTask
+      summary: Criar uma tarefa em Por fazer e sem responsável
+      description: |
+        Qualquer participante ativo do projeto pode criar tarefas.
+        O título é normalizado removendo espaços Unicode das extremidades
+        e depois validado: 1 a 200 pontos de código Unicode, sem truncar.
+        O limite após normalização é uma regra da aplicação, não um maxLength
+        do título bruto do pedido. A descrição não é normalizada.
+        Não são aceites estado, responsável, projeto no corpo ou metadados.
+        A criação é atómica e só há resposta de sucesso após persistência.
+        Uma falha de transporte após gravação pode deixar o resultado incerto;
+        o cliente não deve repetir automaticamente o pedido.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTask'
+            example:
+              title: '  Preparar contrato  '
+              description: Documentar as duas operações.
+      responses:
+        '201':
+          description: Tarefa persistida, em TODO, sem responsável e com versão 1.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+              example:
+                id: task-04
+                projectId: proj-alfa
+                title: Preparar contrato
+                description: Documentar as duas operações.
+                status: TODO
+                assignee: null
+                version: 1
+                createdAt: '2026-10-22T10:03:00Z'
+                updatedAt: '2026-10-22T10:03:00Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/Unavailable'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Prova de acesso opaca; não pressupõe JWT. Validar conta ativa e
+        participação atual no projeto. Origem, expiração e revogação do
+        acesso dependem da decisão de identidade ainda pendente.
+  parameters:
+    ProjectId:
+      name: projectId
+      in: path
+      required: true
+      description: Identificador opaco do projeto; não concede autorização.
+      schema:
+        $ref: '#/components/schemas/Identifier'
+  schemas:
+    Identifier:
+      type: string
+      minLength: 1
+      description: Identificador opaco; o formato físico será definido posteriormente.
+    CreateTask:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title:
+          type: string
+          pattern: '\S'
+          description: |
+            Deve conter texto. Remover espaços Unicode das extremidades antes
+            de validar o limite de 1–200 pontos de código. O limite normalizado
+            é validado pela aplicação; não há truncagem nem limite bruto
+            equivalente imposto por este schema.
+          x-normalization: trim-unicode-whitespace
+          x-normalized-minLength: 1
+          x-normalized-maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+          default: ''
+          description: Texto simples, opcional; omitido significa texto vazio.
+    Assignee:
+      type: object
+      additionalProperties: false
+      required: [userId, displayName]
+      properties:
+        userId:
+          $ref: '#/components/schemas/Identifier'
+        displayName:
+          type: string
+          minLength: 1
+    Task:
+      type: object
+      additionalProperties: false
+      required: [id, projectId, title, description, status, assignee, version, createdAt, updatedAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        projectId:
+          $ref: '#/components/schemas/Identifier'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          pattern: '^\S(?:[\s\S]*\S)?$'
+          description: Título já normalizado, sem espaços nas extremidades.
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [TODO, IN_PROGRESS, DONE]
+          description: TODO = Por fazer; IN_PROGRESS = Em curso; DONE = Concluída.
+        assignee:
+          description: Zero ou um responsável participante do mesmo projeto.
+          oneOf:
+            - $ref: '#/components/schemas/Assignee'
+            - type: 'null'
+        version:
+          type: integer
+          minimum: 1
+          description: Versão para futura edição com deteção de alterações concorrentes.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProjectContext:
+      type: object
+      additionalProperties: false
+      required: [id, name, description, currentRole]
+      properties:
+        id:
+          $ref: '#/components/schemas/Identifier'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          pattern: '^\S(?:[\s\S]*\S)?$'
+        description:
+          type: string
+          maxLength: 2000
+        currentRole:
+          type: string
+          enum: [MANAGER, MEMBER]
+          description: Papel da pessoa autenticada neste projeto; não é um perfil global.
+    Pagination:
+      type: object
+      additionalProperties: false
+      required: [page, pageSize, totalItems, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        totalItems:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+          description: Teto de totalItems/pageSize; 0 quando não há tarefas.
+    Progress:
+      type: object
+      additionalProperties: false
+      required: [total, todo, inProgress, done, completedPercent]
+      description: |
+        Contagens globais do projeto, não da página.
+        total = todo + inProgress + done = pagination.totalItems.
+        completedPercent = 100 * done / total, arredondado ao inteiro mais
+        próximo, com meios para cima; se total = 0, percentagem = 0.
+        Estas relações entre campos são invariantes da aplicação.
+      properties:
+        total: {type: integer, minimum: 0}
+        todo: {type: integer, minimum: 0}
+        inProgress: {type: integer, minimum: 0}
+        done: {type: integer, minimum: 0}
+        completedPercent: {type: integer, minimum: 0, maximum: 100}
+    TaskPage:
+      type: object
+      additionalProperties: false
+      required: [project, items, pagination, progress]
+      properties:
+        project:
+          $ref: '#/components/schemas/ProjectContext'
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Task'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        progress:
+          $ref: '#/components/schemas/Progress'
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail]
+      description: Erro estruturado sem conteúdo sensível, inspirado em Problem Details.
+      properties:
+        type: {type: string, format: uri-reference}
+        title: {type: string}
+        status: {type: integer, minimum: 400, maximum: 599}
+        detail: {type: string}
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [field, message]
+            properties:
+              field: {type: string}
+              message: {type: string}
+  responses:
+    BadRequest:
+      description: JSON malformado ou parâmetro de paginação inválido.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: Pedido inválido
+            status: 400
+            detail: Verifique o formato do pedido e os parâmetros.
+    Unauthorized:
+      description: Prova de acesso ausente/inválida ou conta inativa; sem confirmar existência de conta.
+      headers:
+        WWW-Authenticate:
+          schema: {type: string}
+          example: Bearer
+          description: Indicação do esquema de acesso esperado.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: Autenticação necessária
+            status: 401
+            detail: É necessário acesso válido.
+    NotFound:
+      description: |
+        Projeto inexistente OU pessoa sem participação. Mesmo estado e corpo
+        nos dois casos, sem revelar título, participantes ou existência.
+        Não usar 403 para distinguir o projeto alheio nesta operação.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: Recurso indisponível
+            status: 404
+            detail: O recurso não está disponível.
+    ValidationFailed:
+      description: |
+        Corpo JSON bem formado que viola o schema ou as regras de conteúdo,
+        incluindo título acima do limite após normalização ou campo não permitido.
+        Nenhuma tarefa é criada.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: Dados inválidos
+            status: 422
+            detail: Corrija os campos indicados.
+            errors:
+              - field: title
+                message: O título deve ter entre 1 e 200 caracteres após remover espaços das extremidades.
+    InternalError:
+      description: Falha interna; não apresentar detalhes técnicos nem anunciar sucesso.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: Operação não concluída
+            status: 500
+            detail: Não foi possível concluir a operação.
+    Unavailable:
+      description: Dependência necessária indisponível; não devolver dados fictícios como se fossem reais.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: about:blank
+            title: Serviço indisponível
+            status: 503
+            detail: O serviço está temporariamente indisponível.
