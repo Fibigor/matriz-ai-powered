@@ -120,4 +120,8 @@ Parar serviços sem apagar o volume: `docker compose -p matriz-ficha3 stop`. Dep
 
 ## Estado da entrega
 
+A entrega original da ficha 03 foi versionada pelo autor em `e73250d`; a revisão visual e de acessibilidade está em `f780a29` (`feat: enhance UI components with improved accessibility and visual organization`), observado em `main` e `origin/main` em 29-10-2026. A atualização documental posterior é trabalho da worktree, sem commit ou push efetuados pelo agente.
+
+As conclusões da comparação de prompts realizada pelo autor no Gemini Pro estão em [docs/requirements.md](docs/requirements.md), sem transcrições das conversas. Os procedimentos para reproduzir a entrega numa cópia limpa, percorrer os fluxos por teclado e verificar o contrato e os diagramas estão em [docs/verification.md](docs/verification.md).
+
 Antes de produção: rever dependências, políticas de palavras-passe e limitação de tentativas, configurar HTTPS e `COOKIE_SECURE=true`, segredos, retenção, backups, volumes/escala, identidade e acessibilidade. As verificações desta entrega não são certificação de segurança, conformidade ou desempenho.

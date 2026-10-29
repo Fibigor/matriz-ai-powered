@@ -4,7 +4,7 @@
 
 Execução local em 29-10-2026, aplicação 0.3.0. Stack aprovada: Java 21/Spring Boot 3.5.7, React 19.2/TypeScript 5.9, PostgreSQL 17, monólito modular. No host: Windows, Maven 3.9.9, Node 25.6 e Docker Desktop 29.8; o Dockerfile compila com Node 22 e Java 21.
 
-Branch `feature/ficha-pratica-1`, base `c13da97` (Specification Pack). Após a entrega original, o autor aplicou e versionou a ficha 03 em `e73250d` (`feat: full stack implementation-plan.md and setup`), observado em `main` e `origin/main`. Os ficheiros da implementação foram comparados com esse commit antes da revisão visual e correspondiam. A worktree e o staging, com onze eliminações anteriores, não foram integrados/reparados pelo agente. Não foi executado `git add`, commit, push, merge ou rebase pelo agente.
+Entrega original da ficha 03 em `e73250d` (`feat: full stack implementation-plan.md and setup`) e revisão visual em `f780a29` (`feat: enhance UI components with improved accessibility and visual organization`), commits efetuados pelo autor. `main` e `origin/main` foram observados em `f780a29` em 29-10-2026. O código da aplicação foi conferido com essa versão, normalizando CRLF/LF; o README atualizado pelo autor também foi consultado na versão Git.
 
 O âmbito alargado e as regras de acesso foram aprovados antes de implementar. Limites 1–120/1–200/2 000 mantidos por decisão do autor, em vez de copiar os limites meramente exemplificativos da ficha. Não se presume aceitação pelo cliente ou preparação para produção.
 
@@ -26,7 +26,66 @@ Uma execução intermédia do percurso completo falhou após reload de comentár
 
 Não foram alterados backend, contrato API, dependências, políticas de acesso ou dados existentes deliberadamente. Os percursos concluídos eliminam os seus próprios projetos; o ensaio interrompido conserva os seus dados fictícios, sem limpeza indiscriminada. Não se repetiram os testes Java ou o audit npm nesta iteração exclusivamente visual; os resultados originais abaixo são históricos, não novas execuções.
 
-Fecho desta iteração: aplicação/PostgreSQL parados; volume `matriz-ficha3_matriz_data` existente; portas 8080, 5173 e 55432 sem listeners. Alterações visuais/documentais ainda na worktree, sem commit/push e sem alteração do staging.
+Fecho da execução desta iteração: aplicação/PostgreSQL parados; volume `matriz-ficha3_matriz_data` existente; portas 8080, 5173 e 55432 sem listeners. O autor versionou posteriormente a revisão visual em `f780a29`; o agente preservou o staging e não efetuou commit/push.
+
+## Procedimentos de verificação da entrega
+
+As instruções desta secção descrevem como efetuar e registar uma verificação; não são resultados de execução. Usar apenas contas fictícias e guardar em cada registo: commit, ambiente, comando ou passos, resultado esperado, observado e evidência.
+
+### Reprodução a partir de uma cópia limpa
+
+Usar uma nova pasta e confirmar que as portas 8080 e 55432 estão livres. Se a tua instância Matriz as ocupar, pará-la pelo respetivo comando Compose `stop`, sem remover o volume. O projeto Compose `matriz-verificacao` abaixo usa um volume separado do da demonstração existente.
+
+Com Git, Docker/Compose e os pré-requisitos de desenvolvimento do README disponíveis, executar em PowerShell:
+
+```powershell
+git clone https://github.com/Fibigor/matriz-ai-powered.git matriz-verificacao
+Set-Location matriz-verificacao
+git switch --detach f780a291b62a35bb051b4d99421a0aa534ec5cc9
+git rev-parse HEAD
+Copy-Item .env.example .env
+docker compose -p matriz-verificacao --env-file .env config --quiet
+docker compose -p matriz-verificacao --env-file .env up --build -d
+```
+
+Abrir `http://127.0.0.1:8080` e entrar com uma conta de demonstração indicada no README. Na raiz dessa cópia, executar:
+
+```powershell
+mvn -f backend\pom.xml test '-Dapi.version=1.44'
+Set-Location frontend
+npm ci
+npm test
+npm run build
+npx playwright install chromium
+$env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:8080'
+npm run test:e2e
+Set-Location ..
+```
+
+Criar pela interface um projeto, uma tarefa, um comentário e uma atribuição; anotar os identificadores. Recarregar a página e confirmar os dados. Executar `docker compose -p matriz-verificacao --env-file .env restart app`, voltar a autenticar e consultar os mesmos registos, incluindo autor/data do comentário e responsável. Registar o resultado e os relatórios dos testes.
+
+No final, executar `docker compose -p matriz-verificacao --env-file .env stop`. Conservar os dados de verificação; não usar `down -v`. Em futuras entregas, substituir o commit de referência pelo identificador completo da versão que se pretende verificar.
+
+### Percurso por teclado
+
+Usar Tab, Shift+Tab, Enter, Espaço, Escape e as teclas nativas dos selects, sem rato. Repetir a navegação em desktop e a 390 px, confirmando foco visível, ordem compreensível e ausência de controlos ocultos a receber foco.
+
+| Fluxo | Ações a realizar e resultado a registar |
+|---|---|
+| Sessão e navegação | Entrar com credenciais inválidas e válidas, usar o atalho para o conteúdo, navegar entre vistas e terminar sessão; verificar rótulos e mensagens. |
+| Menu móvel | Abrir, percorrer os links, fechar por Escape e confirmar retorno do foco; reabrir e navegar, confirmando fecho do diálogo. |
+| Projetos | Criar, pesquisar, percorrer a paginação e abrir um projeto; editar como gestor e testar cancelamento/confirmação da eliminação num projeto criado para o ensaio. |
+| Tarefas e filtros | Criar e abrir uma tarefa, editar título/descrição/estado/prioridade, aplicar filtros, navegar nas páginas e cancelar/confirmar eliminação; conferir atualização da lista e do progresso. |
+| Participantes e responsáveis | Como gestor, abrir as secções, adicionar um membro elegível, associar vários responsáveis e retirar uma atribuição; conferir nomes, seleção e feedback. |
+| Comentários e erros | Adicionar e consultar comentários; submeter campos só com espaços e corrigir os erros sem perder o texto. Confirmar que estados e erros são compreensíveis sem depender apenas de cor. |
+
+Registar por fluxo os passos, o controlo focado e o resultado. Associar qualquer desvio à evidência e repetir o percurso após uma correção, sem equiparar esta verificação funcional a certificação WCAG.
+
+### Contrato e diagramas
+
+Validar `openapi.yaml` com um validador local compatível com OpenAPI 3.1/JSON Schema, registando ferramenta, versão, comando e resultado. Rever a ferramenta e aprovar a instalação antes de acrescentar componentes ao ambiente. Conferir referências, parâmetros, schemas e as 21 operações; comparar pedidos/respostas reais com o contrato, incluindo erros, sessão/CSRF, paginação e limites após normalização.
+
+Abrir `docs/database.md` e `docs/architecture.md` no renderizador Mermaid do GitHub, usando os ficheiros já versionados. Confirmar renderização, entidades, chaves e cardinalidades face à migration Flyway e às regras atuais. Distinguir os diagramas da implementação dos blocos históricos; registar o commit e o resultado da inspeção.
 
 ## Registo original da ficha 03
 
@@ -121,7 +180,7 @@ Oportunidade identificada: evitar duplicar validação, autorização e estados 
 - Não houve auditoria independente, pentest, ensaio de carga ou certificação de acessibilidade/segurança. O audit npm não cobre dependências Maven, imagens, configuração operacional ou falhas de lógica.
 - Não foram simuladas todas as falhas de rede/base de dados nem todas as corridas concorrentes; conflito de versão e revogação têm testes, mas não há ensaio multicliente exaustivo. A resposta de transporte pode ser incerta e não deve ser repetida automaticamente.
 - Seed local é opt-in e não reinicializa uma demonstração já existente. Contas fictícias e palavra-passe pública não servem produção. Retenção, identidade empresarial, HTTPS, limitação de tentativas, backups e recuperação continuam pendentes.
-- Na entrega original foi verificado o build Docker com contexto de fontes e exclusão de builds/dependências locais, antes de existir um commit da ficha 03. O autor versionou-a posteriormente em `e73250d`. Esta worktree mantém as onze eliminações staged anteriores; nenhum ficheiro foi adicionado ao índice pelo agente e a iteração visual ainda não foi versionada.
+- Na entrega original foi verificado o build Docker com contexto de fontes e exclusão de builds/dependências locais, antes de existir um commit da ficha 03. O autor versionou-a em `e73250d` e a revisão visual em `f780a29`. Esta worktree mantém as onze eliminações staged anteriores; nenhum ficheiro foi adicionado ao índice pelo agente. O procedimento acima permite registar a reprodução de uma versão Git identificada.
 - O autor autorizou parar os serviços locais ao terminar, conservando o volume `matriz-ficha3_matriz_data`. Para voltar a executar, seguir [README.md](../README.md); nunca remover o volume para um simples reinício.
 
 Fecho observado na entrega original: aplicação e PostgreSQL parados; volume `matriz-ficha3_matriz_data` confirmado existente; portas locais 8080, 5173 e 55432 sem listeners. Verificação documental dessa entrega: 32 ligações locais existentes, nove cenários presentes e blocos de histórico equilibrados. O índice manteve as mesmas onze eliminações anteriores.

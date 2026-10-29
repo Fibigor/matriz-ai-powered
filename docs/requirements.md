@@ -36,7 +36,7 @@ Stack escolhida: Java 21/Spring Boot, React/TypeScript e PostgreSQL, monólito m
 
 ### Qualidade e exclusões
 
-Mantêm-se RNF-01 a RNF-06 do levantamento inicial: autorização direta, persistência, validação com texto conservado, teclado/rótulos/estados textuais, minimização de dados e concorrência sem perda silenciosa. São demonstrados nos testes da ficha 03, sem alegar conformidade integral de acessibilidade.
+Mantêm-se RNF-01 a RNF-06 do levantamento inicial: autorização direta, persistência, validação com texto conservado, teclado/rótulos/estados textuais, minimização de dados e concorrência sem perda silenciosa. A cobertura observada nos testes da ficha 03 e os procedimentos para verificar cada fluxo por teclado estão em [verification.md](verification.md); não se alega conformidade integral de acessibilidade.
 
 Sem notificações, anexos, sprints, integrações, registo público ou relatórios avançados. Retenção, identidade empresarial, backups, metas de escala/disponibilidade, segurança e obrigações legais de produção continuam pendentes. Documentar resultados reais em [verification.md](verification.md).
 
@@ -139,72 +139,27 @@ Também estão fora do MVP: registo público, gestão global de contas, elimina�
 
 ## 8. Exercício 1 — Prompt Engineering
 
-### Parte A — Pedido simples
+### Origem e âmbito da comparação
 
-> Quero criar uma aplicação de gestão de projetos e tarefas chamada Matriz. Ajuda-me a desenvolver a aplicação.
+O autor realizou a comparação em conversas distintas no Gemini Pro e disponibilizou as respostas para análise em 29-10-2026. Registam-se apenas as conclusões; os prompts completos e as transcrições não integram o repositório. Esta análise substitui o exemplo ilustrativo anteriormente elaborado na sessão do projeto.
 
-**Resposta exploratória produzida nesta sessão para análise:** “Podemos começar por projetos e tarefas, utilizadores, um quadro de estados, comentários, notificações e um painel de progresso. Uma arquitetura monolítica com interface e persistência poderá ser um ponto de partida. Depois detalhamos e implementamos cada módulo.”
+### Resultados observados
 
-Esta resposta é um exemplo gerado para o exercício, não uma recomendação aprovada nem o registo de uma conversa independente.
+| Aspeto | Pedido simples | Pedido estruturado |
+|---|---|---|
+| Orientação da resposta | Avançou para protótipo, modelo de domínio e desenho técnico antes de clarificar o problema. | Manteve o foco na análise de requisitos e nas perguntas de clarificação. |
+| Funcionalidades sugeridas | Projetos, tarefas e utilizadores, com datas, prioridade, estados, responsável, quadro Kanban e estatísticas, sem confirmação do âmbito. | Perguntou sobre perfis, permissões, ciclo de vida, estados, responsabilidades, métricas e integrações, sem fechar o MVP. |
+| Decisões técnicas | Invocou Java/Quarkus, Maven, Helm, Panache e padrões de desenho como enquadramento para a solução. Essas opções não estavam estabelecidas pelo pedido simples. | Respeitou a restrição de não propor tecnologias, arquitetura, código ou protótipos. |
+| Factos e pressupostos | Misturou a proposta com um contexto técnico cuja aplicabilidade ao exercício não foi confirmada. | Separou factos de hipóteses, incluindo público corporativo, interpretações do nome Matriz e colaboração em tempo real. |
 
-Análise crítica:
+### Conclusões críticas
 
-- Sugere projetos, tarefas, utilizadores, quadro, comentários, notificações e painel; apenas as três necessidades gerais do enunciado estão confirmadas.
-- Assume colaboração com contas, visualização em quadro e necessidade de comentários/notificações sem perguntar ao cliente.
-- Propõe prematuramente uma arquitetura monolítica; não escolhe uma linguagem, framework ou base de dados. Mesmo sem uma stack concreta, a ordem das decisões é inadequada.
-- Deveria primeiro clarificar perfis e permissões, acesso entre equipas, responsável único ou múltiplo, estados e transições, significado de progresso, prioridades, dados sensíveis e escala.
+O pedido simples favoreceu uma resposta orientada à solução antes de validar o domínio. Deveriam ter sido clarificados primeiro os utilizadores e permissões, os dados essenciais, o ciclo de vida de projetos/tarefas, a cardinalidade dos responsáveis e a definição de progresso. As funcionalidades e tecnologias sugeridas não constituem requisitos nem decisões aprovadas.
 
-### Parte B — Pedido estruturado
+A estrutura Goal → Context → Constraints → Task → Validation tornou o papel, o âmbito e os critérios de resposta explícitos. Na resposta analisada, conduziu a perguntas acionáveis e evitou o desenho técnico prematuro. A separação de hipóteses facilita a revisão humana, mas não valida essas hipóteses: o nome Matriz não justifica por si só RACI, priorização de Eisenhower ou colaboração em tempo real.
 
-```text
-Goal:
-Atua como analista de requisitos. Quero transformar o pedido inicial da Matriz
-numa base de especificação clara e verificável, sem desenvolver a aplicação.
+As respostas não permitem determinar se o contexto técnico invocado no pedido simples veio de memória, personalização ou de uma suposição do modelo. Conversas distintas não garantem condições experimentais idênticas; não se registaram a versão exata do modelo nem todos os parâmetros/contextos. A conclusão é qualitativa sobre as respostas fornecidas, não uma medição controlada nem uma garantia de correção de prompts estruturados.
 
-Context:
-O cliente apenas disse: "Precisamos de uma aplicação onde as nossas equipas
-possam organizar projetos, gerir tarefas e acompanhar o progresso do trabalho."
-Não há funcionalidades detalhadas, regras, tecnologias ou prioridades aprovadas.
-
-Constraints:
-Não proponhas arquitetura, tecnologias ou código. Não inventes decisões do cliente.
-Separa factos conhecidos, informação em falta e pressupostos que carecem de validação.
-Não confundas funcionalidades habituais de ferramentas semelhantes com requisitos.
-
-Task:
-Analisa a descrição. Identifica lacunas e formula perguntas de clarificação,
-priorizando as que alterem o âmbito, as permissões ou as regras de negócio.
-Explica o impacto de cada pergunta. Não respondas em nome do cliente.
-
-Validation:
-A resposta deve conter factos rastreáveis ao enunciado, perguntas acionáveis
-e eventuais hipóteses explicitamente marcadas; não deve escolher tecnologias,
-implementar código nem apresentar hipóteses como requisitos confirmados.
-```
-
-**Resposta ao pedido estruturado nesta sessão:**
-
-Factos: o produto chama-se Matriz, dirige-se a equipas e deve apoiar organização de projetos, gestão de tarefas e acompanhamento do progresso. Não há detalhe suficiente para fechar o MVP.
-
-| Pergunta de clarificação | Impacto |
-|---|---|
-| Quem usa a aplicação e quem pode gerir projetos, acessos e tarefas? | Define atores e permissões. |
-| É uma ferramenta interna? Uma pessoa pode aceder a todos os projetos? | Define fronteiras de privacidade e participação. |
-| Como entram os utilizadores e quem disponibiliza as contas? | Delimita autenticação e administração. |
-| Que informação mínima identifica um projeto e uma tarefa? | Define dados obrigatórios e validações. |
-| Uma tarefa pertence a um só projeto e tem um ou vários responsáveis? | Define responsabilidade e regras de associação. |
-| Que estados existem e é permitido reabrir trabalho concluído? | Define o fluxo de trabalho. |
-| Progresso significa tarefas concluídas, esforço, horas ou outra medida? | Evita um indicador enganador. |
-| Quais são as funcionalidades imprescindíveis e quais podem esperar? | Permite delimitar um MVP. |
-| Que dados são sensíveis e quanto tempo devem ser conservados? | Define proteção e ciclo de vida da informação. |
-| Quantas pessoas e tarefas se esperam, e que tempos de resposta são aceitáveis? | Permite definir requisitos não funcionais mensuráveis. |
-
-Não se atribuem respostas ao cliente. As hipóteses usadas nos exercícios seguintes são registadas separadamente em `constraints.md`.
-
-### Comparação e limitações
-
-O pedido simples favorece uma resposta extensa mas mistura descoberta, desenho e implementação, introduzindo funcionalidades sem justificação. A estrutura Goal → Context → Constraints → Task → Validation delimita o papel da IA, torna explícitas as lacunas e permite rejeitar uma resposta que invente decisões.
-
-Um prompt estruturado reduz ambiguidades, mas não garante correção nem substitui validação humana. Esta comparação foi elaborada numa sessão com os materiais já disponíveis, não em duas conversas novas e isoladas. Logo, não demonstra experimentalmente a influência exclusiva do prompt: contexto prévio e variabilidade do modelo podem influenciar o resultado. Para reproduzir literalmente a Parte A da ficha, executar os dois prompts em conversas novas, com a mesma ferramenta e contexto inicial, e comparar as respostas reais com esta grelha.
+A escolha posterior de Java/Spring Boot, React e PostgreSQL resulta das decisões aprovadas da ficha 03, não da sugestão inicial do Gemini Pro.
 
 </details>

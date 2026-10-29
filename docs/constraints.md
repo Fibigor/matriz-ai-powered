@@ -12,9 +12,11 @@ O seed é opt-in, com contas fictícias e hashes de palavras-passe; não apaga/r
 
 Continuam proibidos sem nova aprovação: commit, push, deploy público, eliminação de volumes/dados existentes e alteração do staging. As eliminações staged anteriores são preservadas, mesmo que não representem a intenção final de entrega; o autor deve revê-las antes de versionar.
 
-O autor aplicou e versionou a ficha 03 em `e73250d`, observado em `main` e `origin/main`, após o Architecture Pack em `d1edc51`. Esta branch permanece em `c13da97`; não foi feita integração/rebase da branch nem inferida aprovação para corrigir o índice.
+O autor aplicou e versionou a ficha 03 em `e73250d` e a revisão visual em `f780a29`, observado em `main` e `origin/main` em 29-10-2026, após o Architecture Pack em `d1edc51`. Esta branch permanece em `c13da97`; não foi feita integração/rebase da branch nem inferida aprovação para corrigir o índice. A atualização documental posterior mantém-se separada desses commits.
 
 Na iteração visual posterior, o autor aprovou uma adaptação original sem novas dependências: tema escuro/azul inspirado no Black Dashboard React, com navegação e organização de conteúdo ao estilo Jira. Inclui `Layout.tsx`, testes e ajustes às vistas existentes; não autoriza quadros, backlog, sprints, alterações de permissões/API ou importação da stack do template. As contagens do painel são globais apenas ao projeto selecionado. Foi autorizada execução local para validação, seguida de paragem dos serviços sem apagar o volume.
+
+A comparação de prompts da ficha 01 foi realizada pelo autor em conversas distintas no Gemini Pro. As conclusões baseadas nas respostas disponibilizadas estão em [requirements.md](requirements.md), sem guardar os chats ou os prompts completos. Sugestões do modelo não alteram o âmbito nem a stack aprovados.
 
 Questões Q-01 a Q-07 e Q-10 foram decididas para a demonstração nas regras em vigor de `requirements.md`; não se declaram validadas pelo cliente. Q-08/Q-09 permanecem pendentes: escala/SLA, retenção, jurisdição, acessibilidade, backups e conformidade. Identidade empresarial e endurecimento de segurança continuam necessários antes de produção. Sessões locais são a escolha para o exercício, não uma decisão corporativa.
 
@@ -121,11 +123,13 @@ Esta é uma auto-revisão da IA, não uma revisão independente. A triagem abaix
 
 - O autor aprovou criar os cinco documentos e usar o âmbito do MVP como proposta.
 - A aprovação da triagem acima e das regras detalhadas, bem como a validação com o cliente, estão pendentes.
-- A comparação do exercício 1 contém respostas elaboradas nesta sessão, não execuções em conversas novas e isoladas. A limitação e o procedimento de reprodução estão em `requirements.md`.
+- O exemplo ilustrativo inicial do exercício 1 foi substituído pelas conclusões da comparação realizada pelo autor em conversas distintas no Gemini Pro. A análise e os limites de interpretação estão em `requirements.md`; não se guardam transcrições.
 - O desafio complementar abaixo é uma simulação textual, não uma garantia de resistência de uma ferramenta ou ambiente real.
-- A ficha 01 foi versionada manualmente pelo autor no commit `c13da97`. O commit dos artefactos da ficha 02 continua pendente; não há autorização para commit ou push nesta atividade.
+- O autor versionou a ficha 01 em `c13da97` e o Architecture Pack em `d1edc51`, antes da implementação da ficha 03. Estes commits manuais não autorizam o agente a efetuar novos commits ou push.
 
 ### Checklist de entrega
+
+Esta checklist conserva o levantamento inicial, com atualização da comparação de prompts e do versionamento. As decisões da implementação posterior constam da secção em vigor no início do documento.
 
 - [x] MVP delimitado e funcionalidades futuras separadas.
 - [x] Nove User Stories propostas, priorizadas e rastreáveis a RF-01 a RF-09.
@@ -135,10 +139,10 @@ Esta é uma auto-revisão da IA, não uma revisão independente. A triagem abaix
 - [x] `AGENTS.md` com limites de âmbito, aprovação e comunicação.
 - [x] Respostas da IA e limitações analisadas criticamente.
 - [ ] Triagem e regras detalhadas revistas por uma pessoa.
-- [ ] Parte A do exercício 1 reproduzida numa conversa nova, se exigida como evidência experimental.
+- [x] Comparação dos pedidos simples e estruturado realizada pelo autor em conversas distintas; conclusões documentadas sem transcrições.
 - [ ] Perguntas bloqueantes resolvidas antes de fechar a próxima fase.
 - [x] Specification Pack da ficha 01 versionado manualmente pelo autor (`c13da97`).
-- [ ] Architecture Pack da ficha 02 revisto por uma pessoa e versionado.
+- [x] Architecture Pack da ficha 02 versionado pelo autor (`d1edc51`); triagem registada em `architecture.md`, sem equiparar commit a validação pelo cliente.
 
 ## 7. Desafio complementar — Conteúdo externo não confiável
 
