@@ -8,6 +8,25 @@ Entrega original da ficha 03 em `e73250d` (`feat: full stack implementation-plan
 
 O âmbito alargado e as regras de acesso foram aprovados antes de implementar. Limites 1–120/1–200/2 000 mantidos por decisão do autor, em vez de copiar os limites meramente exemplificativos da ficha. Não se presume aceitação pelo cliente ou preparação para produção.
 
+## Atualização aprovada — OIDC, retenção, p95 e produção
+
+O autor aprovou Keycloak OIDC Authorization Code para a demonstração, sessão Spring no servidor, CSRF e ligação do claim assinado `app_user_id` a perfil local ativo já existente. Não há aprovisionamento automático. Retenção de um ano é pressuposto provisório, sem âmbito/evento inicial definidos e sem purga automática. p95 é métrica sem alvo/carga definidos. Produção está diferida.
+
+Verificações locais desta atualização:
+
+| Verificação | Resultado observado |
+|---|---|
+| `mvn -q -f backend\pom.xml test '-Dapi.version=1.44'` | 7 testes passaram; PostgreSQL 17/Testcontainers aplicou V1 e V2. Testes cobrem claim OIDC, conta desconhecida/inativa, perfis demo sem hash local, CSRF e logout. |
+| Em `frontend`: `npm test` e `npm run build` | 13 testes passaram; TypeScript e Vite concluíram o build. |
+| Compose isolado `matriz-keycloak-check` | Imagem da aplicação construída; PostgreSQL, Keycloak 26.3.5 e realm fictício iniciados em portas alternativas 18080/55433/18180. |
+| E2E contra a aplicação Compose e Keycloak reais | 3/3 passaram: fluxo integrado, credenciais inválidas e navegação móvel/teclado. O login OIDC foi também percorrido por teclado, do botão da Matriz aos campos/ação do Keycloak. |
+| `npx --yes @redocly/cli lint openapi.yaml` (2.72.1) | Contrato OpenAPI 3.1 válido; 24 avisos de lint, incluindo respostas 4xx recomendadas, descrições de tags/licença e a operação de redirecionamento sem resposta 2xx. |
+| Fecho do ensaio | Serviços do projeto isolado parados; volume `matriz-keycloak-check_matriz_data` preservado. Não foi removido nenhum volume. |
+
+Não foi feita nova cópia limpa da versão atual porque as alterações ainda não estão num commit; a cópia limpa anterior verificou apenas o commit histórico `f780a291b62a35bb051b4d99421a0aa534ec5cc9`. p95 não foi medido: workload e alvo continuam por definir. Estas verificações não certificam segurança, conformidade ou desempenho.
+
+Para medir p95 quando houver carga aprovada, registar endpoint/operação, volume de dados, concorrência, duração, ambiente e ferramenta; calcular o percentil sobre pedidos concluídos e reportar distribuição/erros junto com a latência. Não há ainda workload de referência, alvo aprovado nem medição desta versão.
+
 ## Iteração visual posterior — tema escuro e estrutura Jira
 
 Direção aprovada pelo autor: manter a paleta escura/azul inspirada no Black Dashboard React e reorganizar a interface como espaço de trabalho ao estilo Jira, sem novas dependências nem mudanças de API/permissões. Barra superior global, navegação lateral compacta, breadcrumbs, vistas e tabelas; navegação móvel em diálogo modal nativo.
@@ -34,7 +53,7 @@ As instruções desta secção descrevem como efetuar e registar uma verificaç�
 
 ### Reprodução a partir de uma cópia limpa
 
-Usar uma nova pasta e confirmar que as portas 8080 e 55432 estão livres. Se a tua instância Matriz as ocupar, pará-la pelo respetivo comando Compose `stop`, sem remover o volume. O projeto Compose `matriz-verificacao` abaixo usa um volume separado do da demonstração existente.
+Este procedimento e o commit fixo verificam a versão anterior à autenticação OIDC; não os usar como evidência da atualização atual. Para a atualizar, repetir numa cópia limpa do commit que a contém, confirmar portas 8080, 8180 e 55432 livres e manter o projeto Compose `matriz-verificacao` separado. Se outra instância Matriz as ocupar, não a parar sem autorização; escolher um projeto/portas isolados e preservar todos os volumes existentes.
 
 Com Git, Docker/Compose e os pré-requisitos de desenvolvimento do README disponíveis, executar em PowerShell:
 
@@ -48,7 +67,9 @@ docker compose -p matriz-verificacao --env-file .env config --quiet
 docker compose -p matriz-verificacao --env-file .env up --build -d
 ```
 
-Abrir `http://127.0.0.1:8080` e entrar com uma conta de demonstração indicada no README. Na raiz dessa cópia, executar:
+O commit fixo do bloco reproduz a versão anterior e usa o login local descrito no README dessa versão; essa reprodução não valida Keycloak. Para a atualização OIDC, usar o commit que a contém, abrir `http://localhost:8080`, seguir **Entrar com Keycloak** e autenticar uma conta fictícia do README atual. Usar `localhost` consistentemente para manter o fluxo de callback no mesmo site e permitir o cookie SameSite Strict. O percurso deve regressar à Matriz com sessão no servidor.
+
+Na raiz dessa cópia, executar:
 
 ```powershell
 mvn -f backend\pom.xml test '-Dapi.version=1.44'
@@ -57,7 +78,7 @@ npm ci
 npm test
 npm run build
 npx playwright install chromium
-$env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:8080'
+$env:PLAYWRIGHT_BASE_URL='http://localhost:8080'
 npm run test:e2e
 Set-Location ..
 ```
@@ -72,7 +93,7 @@ Usar Tab, Shift+Tab, Enter, Espaço, Escape e as teclas nativas dos selects, sem
 
 | Fluxo | Ações a realizar e resultado a registar |
 |---|---|
-| Sessão e navegação | Entrar com credenciais inválidas e válidas, usar o atalho para o conteúdo, navegar entre vistas e terminar sessão; verificar rótulos e mensagens. |
+| Sessão e navegação | Seguir **Entrar com Keycloak**, testar credenciais fictícias inválidas e válidas no IdP, usar o atalho para o conteúdo, navegar entre vistas e terminar sessão Matriz; verificar rótulos, foco e mensagens. |
 | Menu móvel | Abrir, percorrer os links, fechar por Escape e confirmar retorno do foco; reabrir e navegar, confirmando fecho do diálogo. |
 | Projetos | Criar, pesquisar, percorrer a paginação e abrir um projeto; editar como gestor e testar cancelamento/confirmação da eliminação num projeto criado para o ensaio. |
 | Tarefas e filtros | Criar e abrir uma tarefa, editar título/descrição/estado/prioridade, aplicar filtros, navegar nas páginas e cancelar/confirmar eliminação; conferir atualização da lista e do progresso. |
@@ -83,7 +104,7 @@ Registar por fluxo os passos, o controlo focado e o resultado. Associar qualquer
 
 ### Contrato e diagramas
 
-Validar `openapi.yaml` com um validador local compatível com OpenAPI 3.1/JSON Schema, registando ferramenta, versão, comando e resultado. Rever a ferramenta e aprovar a instalação antes de acrescentar componentes ao ambiente. Conferir referências, parâmetros, schemas e as 21 operações; comparar pedidos/respostas reais com o contrato, incluindo erros, sessão/CSRF, paginação e limites após normalização.
+Validar `openapi.yaml` com um validador local compatível com OpenAPI 3.1/JSON Schema, registando ferramenta, versão, comando e resultado. Rever a ferramenta e aprovar a instalação antes de acrescentar componentes ao ambiente. Conferir referências, parâmetros, schemas e operações; verificar que `GET /auth/login` redireciona para o fluxo Keycloak, que a sessão/CSRF permanecem documentadas e que não há contrato de palavra-passe local.
 
 Abrir `docs/database.md` e `docs/architecture.md` no renderizador Mermaid do GitHub, usando os ficheiros já versionados. Confirmar renderização, entidades, chaves e cardinalidades face à migration Flyway e às regras atuais. Distinguir os diagramas da implementação dos blocos históricos; registar o commit e o resultado da inspeção.
 

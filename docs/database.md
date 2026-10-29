@@ -6,12 +6,14 @@ PostgreSQL 17, migration Flyway `backend/src/main/resources/db/migration/V1__ini
 
 | Tabela | Atributos e regras principais |
 |---|---|
-| `app_user` | id opaco, username único, display_name, password_hash BCrypt e active; contas locais fictícias, sem API pública de registo. |
+| `app_user` | id opaco, username único usado como referência de demonstração, display_name, password_hash anulável para compatibilidade com hashes locais antigos e active; perfis locais são ligados ao claim Keycloak `app_user_id`. |
 | `project` | id, name 1–120, description até 2 000, owner_user_id, version positiva, created_at UTC. Proprietário é gestor por projeto. |
 | `participation` | PK composta (project_id,user_id), joined_at; inclui gestor. FK composta diferível do projeto obriga o gestor a participar. |
 | `task` | id, project_id fixo, title 1–200, description até 2 000, status, priority, version, created_at e updated_at. Inicial TODO/MEDIUM, versão 1. |
 | `task_assignment` | PK (task_id,user_id), project_id e assigned_at; FK composta para tarefa/projeto e participação/projeto. Zero ou vários responsáveis. |
 | `task_comment` | id, task_id, author_id, content 1–2 000, created_at; autor e data do servidor. |
+
+V1 definiu `password_hash` como obrigatório para a autenticação local inicial. V2 permite NULL para novos perfis OIDC; não apaga hashes existentes. O seed cria perfis sem credenciais locais. O claim externo não é guardado na base de dados: a identidade é resolvida no login e o perfil/estado ativo é consultado em cada operação. Não existe processo automático de purga; retenção de um ano é apenas um pressuposto provisório, sem âmbito nem evento inicial definidos.
 
 ```mermaid
 erDiagram

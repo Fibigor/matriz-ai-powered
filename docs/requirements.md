@@ -4,11 +4,11 @@
 
 Em 29-10-2026 o autor aprovou implementar integralmente o âmbito da ficha 03 e as regras abaixo. Esta secção substitui as exclusões e a responsabilidade única da ficha 01; o levantamento original é conservado no histórico no final, não é uma segunda especificação em vigor. Não se presume validação com o cliente ou autorização de produção.
 
-Stack escolhida: Java 21/Spring Boot, React/TypeScript e PostgreSQL, monólito modular. A demonstração usa contas locais com hashes BCrypt e sessões protegidas por CSRF; sem registo público ou recuperação de palavra-passe.
+Stack escolhida: Java 21/Spring Boot, React/TypeScript e PostgreSQL, monólito modular. A autenticação da demonstração usa Keycloak OIDC Authorization Code e sessão Spring no servidor, protegida por CSRF. A identidade OIDC só dá acesso quando o claim assinado `app_user_id` corresponde a uma conta local ativa; não há aprovisionamento automático, registo público ou recuperação de palavra-passe na Matriz.
 
 | ID atual | Requisito | Prioridade |
 |---|---|---|
-| RF-01 | Iniciar sessão, consultar perfil e terminar sessão; recusar conta inativa e credenciais inválidas. | Must |
+| RF-01 | Autenticar através do fornecedor OIDC aprovado, consultar perfil e terminar sessão Matriz; recusar identidade sem conta local ativa associada. | Must |
 | RF-02 | Criar projetos com proprietário inferido da sessão. | Must |
 | RF-03 | Listar, pesquisar pelo nome e consultar apenas projetos acessíveis, com paginação. | Must |
 | RF-04 | Gestor adiciona/remove membros existentes por identificador exato; participantes consultam os membros. | Must |
@@ -36,9 +36,9 @@ Stack escolhida: Java 21/Spring Boot, React/TypeScript e PostgreSQL, monólito m
 
 ### Qualidade e exclusões
 
-Mantêm-se RNF-01 a RNF-06 do levantamento inicial: autorização direta, persistência, validação com texto conservado, teclado/rótulos/estados textuais, minimização de dados e concorrência sem perda silenciosa. A cobertura observada nos testes da ficha 03 e os procedimentos para verificar cada fluxo por teclado estão em [verification.md](verification.md); não se alega conformidade integral de acessibilidade.
+Mantêm-se RNF-01 a RNF-06 do levantamento inicial: autorização direta, persistência, validação com texto conservado, teclado/rótulos/estados textuais, minimização de dados e concorrência sem perda silenciosa. Um ano de retenção é apenas um pressuposto provisório para discussão, não uma policy aprovada: âmbito dos dados e evento inicial do prazo continuam indefinidos; não existe purga automática. p95 é uma métrica a recolher, sem carga de referência ou alvo aprovado. A produção está diferida; não há autorização de deploy nem alegação de prontidão. A cobertura observada nos testes da ficha 03 e os procedimentos para verificar cada fluxo por teclado estão em [verification.md](verification.md); não se alega conformidade integral de acessibilidade.
 
-Sem notificações, anexos, sprints, integrações, registo público ou relatórios avançados. Retenção, identidade empresarial, backups, metas de escala/disponibilidade, segurança e obrigações legais de produção continuam pendentes. Documentar resultados reais em [verification.md](verification.md).
+Sem notificações, anexos, sprints, integrações, registo público ou relatórios avançados. A policy de retenção e o respetivo âmbito/evento inicial, identidade empresarial, backups, metas de escala/disponibilidade, segurança e obrigações legais de produção continuam pendentes. Documentar resultados reais em [verification.md](verification.md).
 
 <details>
 <summary>Histórico da ficha 01 — levantamento inicial e exercício de prompts; âmbito substituído acima</summary>

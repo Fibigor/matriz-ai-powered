@@ -1,11 +1,9 @@
 package pt.matriz.identity;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,26 +11,20 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(name = "matriz.demo.enabled", havingValue = "true")
 public class DemoSeed implements ApplicationRunner {
     private final JdbcTemplate db;
-    private final PasswordEncoder encoder;
-    private final String password;
 
-    public DemoSeed(JdbcTemplate db, PasswordEncoder encoder, @Value("${matriz.demo.password}") String password) {
+    public DemoSeed(JdbcTemplate db) {
         this.db = db;
-        this.encoder = encoder;
-        this.password = password;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments arguments) {
-        if (password.length() < 12) throw new IllegalStateException("DEMO_PASSWORD must contain at least 12 characters.");
         // A transaction-scoped lock makes simultaneous demo startups safe without resetting existing data.
         db.execute("SELECT pg_advisory_xact_lock(73429031)");
         if (Boolean.TRUE.equals(db.queryForObject("SELECT EXISTS(SELECT 1 FROM app_user WHERE id='user-ana')", Boolean.class))) return;
-        String hash = encoder.encode(password);
         for (String[] user : new String[][]{{"ana", "Ana"}, {"bruno", "Bruno"}, {"carla", "Carla"}}) {
-            db.update("INSERT INTO app_user(id,username,display_name,password_hash) VALUES (?,?,?,?)",
-                    "user-" + user[0], user[0], user[1], hash);
+            db.update("INSERT INTO app_user(id,username,display_name) VALUES (?,?,?)",
+                    "user-" + user[0], user[0], user[1]);
         }
         db.update("INSERT INTO project(id,name,description,owner_user_id) VALUES ('proj-alfa','Alfa','Preparação do MVP da Matriz','user-ana')");
         db.update("INSERT INTO participation(project_id,user_id) VALUES ('proj-alfa','user-ana'),('proj-alfa','user-bruno')");

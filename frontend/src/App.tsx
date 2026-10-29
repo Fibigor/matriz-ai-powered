@@ -3,7 +3,7 @@ import { api, ApiError } from './api';
 import type { User } from './types';
 import { Projects } from './Projects';
 import { ProjectDetail, TaskDetail } from './Tasks';
-import { Feedback, submit, useMutation } from './ui';
+import { Feedback, useMutation } from './ui';
 import { Layout } from './Layout';
 
 function subscribe(callback: () => void) {
@@ -12,10 +12,8 @@ function subscribe(callback: () => void) {
 }
 const hash = () => window.location.hash;
 
-function Login({ loggedIn, notice }: { loggedIn: (user: User) => void; notice: string }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const mutation = useMutation();
+function Login({ notice }: { notice: string }) {
+  const authError = new URLSearchParams(window.location.search).has('authError');
   return <main className="login-page">
     <section className="login-intro">
       <div className="login-brand"><span className="brand-mark" aria-hidden="true">M</span> MATRIZ</div>
@@ -26,16 +24,11 @@ function Login({ loggedIn, notice }: { loggedIn: (user: User) => void; notice: s
     </section>
     <section className="card login-card"><p className="eyebrow">Bem-vindo de volta</p>
     <h1>Entrar na Matriz</h1><p className="muted">O próximo passo começa aqui.</p>
-    <Feedback error={mutation.error || notice} />
-    <form onSubmit={submit(() => void mutation.run(async () => {
-      const user = await api<User>('/auth/login', { method: 'POST', body: new URLSearchParams({ username, password }) });
-      setPassword(''); loggedIn(user);
-    }, ''))}>
-      <label>Utilizador<input autoComplete="username" required value={username} onChange={event => setUsername(event.target.value)} /></label>
-      <label>Palavra-passe<input type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} /></label>
-      <button disabled={mutation.busy}>{mutation.busy ? 'A entrar…' : 'Entrar'}</button>
+    <Feedback error={notice || (authError ? 'Não foi possível concluir a autenticação. Tente novamente.' : '')} />
+    <form method="get" action="/api/auth/login">
+      <button type="submit">Entrar com Keycloak</button>
     </form>
-    <p className="login-note">Utilize a conta disponibilizada para aceder ao seu espaço.</p>
+    <p className="login-note">A autenticação é gerida pelo serviço de identidade.</p>
     </section>
   </main>;
 }
@@ -56,7 +49,7 @@ export default function App() {
     return () => window.removeEventListener('session-expired', expired);
   }, []);
   if (starting) return <main className="session-loading"><p role="status">A verificar sessão…</p></main>;
-  if (!user) return <Login loggedIn={value => { setUser(value); setNotice(''); }} notice={notice} />;
+  if (!user) return <Login notice={notice} />;
   let content = <Projects dashboard />;
   if (route[0] === 'projects') {
     if (route[1] && route[2] === 'tasks' && route[3]) content = <TaskDetail key={route[3]} projectId={route[1]} id={route[3]} />;

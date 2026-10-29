@@ -1,12 +1,40 @@
 import { expect, test } from '@playwright/test';
 
+async function signIn(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Entrar com Keycloak' }).click();
+  await page.getByLabel('Username').fill('ana');
+  await page.getByRole('textbox', { name: 'Password' }).fill('Matriz-Demo-2026!');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await expect(page.getByRole('heading', { name: 'Painel inicial' })).toBeVisible();
+}
+
+async function keyboardSignIn(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  const start = page.getByRole('button', { name: 'Entrar com Keycloak' });
+  await expect(start).toBeVisible();
+  await page.keyboard.press('Tab');
+  await expect(start).toBeFocused();
+  await page.keyboard.press('Enter');
+  const username = page.getByRole('textbox', { name: 'Username' });
+  const password = page.getByRole('textbox', { name: 'Password' });
+  await expect(username).toBeFocused();
+  await page.keyboard.type('ana');
+  await page.keyboard.press('Tab');
+  await expect(password).toBeFocused();
+  await page.keyboard.type('Matriz-Demo-2026!');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Show password' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  const submit = page.getByRole('button', { name: 'Sign In' });
+  await expect(submit).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Painel inicial' })).toBeVisible();
+}
+
 test('percurso integrado: projeto, tarefas, filtros, atribuições, comentários e eliminação', async ({ page }) => {
   const suffix = Date.now();
-  await page.goto('/');
-  await page.getByLabel('Utilizador', { exact: true }).fill('ana');
-  await page.getByLabel('Palavra-passe').fill('Matriz-Demo-2026!');
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Painel inicial' })).toBeVisible();
+  await keyboardSignIn(page);
   await page.getByLabel('Nome do projeto *').fill(`E2E ${suffix}`);
   await page.getByRole('button', { name: 'Criar projeto', exact: true }).click();
   await page.getByRole('link', { name: `E2E ${suffix}`, exact: true }).click();
@@ -58,17 +86,19 @@ test('percurso integrado: projeto, tarefas, filtros, atribuições, comentários
   await expect(page.getByRole('heading', { name: 'Entrar na Matriz' })).toBeVisible();
 });
 
-test('credenciais inválidas e vista móvel', async ({ page }) => {
+test('Keycloak rejeita credenciais inválidas e a vista móvel funciona', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Entrar na Matriz' })).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
-  await page.getByLabel('Utilizador', { exact: true }).fill('ana');
-  await page.getByLabel('Palavra-passe').fill('incorreta');
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('Credenciais inválidas');
-  await page.getByLabel('Palavra-passe').fill('Matriz-Demo-2026!');
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await page.getByRole('button', { name: 'Entrar com Keycloak' }).click();
+  await page.getByLabel('Username').fill('ana');
+  await page.getByRole('textbox', { name: 'Password' }).fill('incorreta');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible();
+  await expect(page.getByText('Invalid username or password.', { exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Password' }).fill('Matriz-Demo-2026!');
+  await page.getByRole('button', { name: 'Sign In' }).click();
   await expect(page.getByRole('heading', { name: 'Painel inicial' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
@@ -78,9 +108,7 @@ test('workspace Jira: dados reais, navegação móvel e teclado', async ({ page 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Entrar na Matriz' })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('login-desktop.png'), fullPage: true });
-  await page.getByLabel('Utilizador', { exact: true }).fill('ana');
-  await page.getByLabel('Palavra-passe').fill('Matriz-Demo-2026!');
-  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await signIn(page);
   const summary = page.getByRole('region', { name: 'Resumo do projeto' });
   await summary.getByRole('combobox', { name: 'Projeto do resumo' }).selectOption('proj-alfa');
   await expect(summary.getByText('2 de 5 tarefas concluídas')).toBeVisible();

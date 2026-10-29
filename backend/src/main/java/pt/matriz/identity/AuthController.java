@@ -1,5 +1,7 @@
 package pt.matriz.identity;
 
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.Map;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -20,6 +22,11 @@ public class AuthController {
         return Map.of("headerName", token.getHeaderName(), "token", token.getToken());
     }
 
+    @GetMapping("/login")
+    public void login(HttpServletResponse response) throws IOException {
+        response.sendRedirect("/oauth2/authorization/keycloak");
+    }
+
     @GetMapping("/me")
-    public UserView me(Principal principal) { return identities.current(principal.getName()); }
+    public UserView me(Principal principal) { return identities.current(principal); }
 }

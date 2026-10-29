@@ -7,7 +7,7 @@ Decisões aprovadas pelo autor em 29-10-2026: monólito modular mantido; Java 21
 | Componente | Implementação e responsabilidade |
 |---|---|
 | Interface | `frontend/src/App.tsx`, `Layout.tsx`, `Projects.tsx`, `Tasks.tsx`: login, estrutura partilhada, painel, projetos, detalhe de projeto/tarefa; cliente `api.ts` e estados comuns em `ui.tsx`. |
-| Identidade | `backend/.../identity`: Spring Security, BCrypt 12, login form-urlencoded, sessão no servidor, perfil e logout. Conta ativa verificada em cada operação de negócio. |
+| Identidade | `backend/.../identity`: Spring Security OAuth2 Client/OIDC com Keycloak, sessão no servidor, perfil e logout local. Claim `app_user_id` ligado a conta local ativa, verificada em cada operação de negócio. |
 | Projetos | `backend/.../projects`: propriedade, participação, CRUD, pesquisa, paginação, autorização e contagens globais. |
 | Tarefas | `backend/.../tasks`: CRUD, estado/prioridade, filtros, atribuições N:M e comentários, com autorização pelo contrato interno do módulo projetos. |
 | Transversal | `backend/.../common`: DTOs tipados, erros Problem Details, validação Unicode e paginação. |
@@ -15,6 +15,12 @@ Decisões aprovadas pelo autor em 29-10-2026: monólito modular mantido; Java 21
 | Entrega | Dockerfile multi-stage compila React e inclui o resultado no JAR. Compose executa aplicação e PostgreSQL com volume persistente. Vite separado apenas em desenvolvimento. |
 
 ### Identidade e ciclo de acesso
+
+O login atual usa OIDC Authorization Code com Keycloak. O servidor valida o ID token e só aceita o claim assinado `app_user_id` quando corresponde a um perfil local ativo; não cria perfis automaticamente. O identificador interno é obtido exclusivamente deste claim autenticado, nunca de um pedido de negócio.
+
+Compose fornece Keycloak e realm fictício local. O issuer público do navegador é `http://localhost:8180/realms/matriz`; as chamadas back-channel do container da aplicação usam `http://keycloak:8080/realms/matriz`. `GET /api/auth/login` inicia o redirecionamento; o callback OIDC cria a sessão Matriz no servidor. Mantêm-se cookie HttpOnly/SameSite Strict, sessão renovada no login, expiração inativa de 30 minutos, CSRF nas escritas e `COOKIE_SECURE=true` com HTTPS fora da demonstração. O logout invalida a sessão Matriz, não a sessão independente do Keycloak. Não há CORS aberto nem localStorage com segredos.
+
+#### Implementação anterior ao OIDC — histórico
 
 O Bearer preliminar da ficha 02 foi substituído, com autorização do autor, por sessão Spring Security: cookie HttpOnly/SameSite Strict, sessão renovada no login, expiração inativa de 30 minutos, invalidação no logout. `COOKIE_SECURE=true` é obrigatório com HTTPS fora da demonstração local. O frontend usa mesma origem/proxy; não há CORS aberto, localStorage com segredos ou identidade inferida de valores enviados pelo cliente.
 

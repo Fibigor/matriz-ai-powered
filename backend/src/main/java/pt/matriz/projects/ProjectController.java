@@ -18,7 +18,7 @@ public class ProjectController {
         this.identities = identities;
     }
 
-    private String user(Principal principal) { return identities.current(principal.getName()).id(); }
+    private String user(Principal principal) { return identities.current(principal).id(); }
 
     @GetMapping
     public ProjectPage list(Principal principal, @RequestParam(defaultValue = "") String search,

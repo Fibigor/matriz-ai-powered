@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import pt.matriz.common.ApiErrors;
@@ -14,24 +12,17 @@ import pt.matriz.common.ApiErrors;
 @Configuration
 public class SecurityConfig {
     @Bean
-    PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
-
-    @Bean
-    SecurityFilterChain security(HttpSecurity http, ObjectMapper mapper, IdentityService identities) throws Exception {
+    SecurityFilterChain security(HttpSecurity http, ObjectMapper mapper) throws Exception {
         return http
                 .csrf(csrf -> csrf.csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/csrf", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/csrf", "/api/auth/login", "/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
                         .anyRequest().denyAll())
-                .formLogin(login -> login.loginProcessingUrl("/api/auth/login")
-                        .successHandler((request, response, authentication) -> {
-                            response.setContentType("application/json");
-                            mapper.writeValue(response.getOutputStream(), identities.current(authentication.getName()));
-                        })
+                .oauth2Login(login -> login.defaultSuccessUrl("/", true)
                         .failureHandler((request, response, exception) ->
-                                ApiErrors.write(response, mapper, 401, "Credenciais inválidas.")))
+                                response.sendRedirect("/?authError")))
                 .logout(logout -> logout.logoutUrl("/api/auth/logout")
                         .invalidateHttpSession(true).deleteCookies("JSESSIONID")
                         .logoutSuccessHandler((request, response, authentication) -> response.setStatus(204)))

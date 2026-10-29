@@ -6,14 +6,14 @@ Em 29-10-2026 o autor aprovou o âmbito integral da ficha 03, substituindo as ex
 
 O gestor gere o projeto, os membros e as atribuições. Todos os participantes ativos criam, editam e eliminam tarefas e comentam. Responsáveis são participantes ativos do mesmo projeto. A eliminação confirmada remove os dependentes numa transação. Permanecem os limites aprovados: projeto 1–120, tarefa 1–200 e descrições até 2 000 pontos de código após normalização de nome/título.
 
-Aprovados: sessão HttpOnly e CSRF com Spring Security, BCrypt, dados fictícios, dependências Maven/npm, imagens Docker oficiais e serviços locais. Não aprovados ao agente: commit, push, deploy público, eliminação de dados existentes ou alteração do staging. O autor versionou a ficha 03 em `e73250d` e a revisão visual em `f780a29`, observado em `main` e `origin/main` em 29-10-2026; esta worktree continua em `feature/ficha-pratica-1`, baseada em `c13da97`, com o staging anterior preservado.
+Aprovados: sessão HttpOnly e CSRF com Spring Security, e posteriormente Keycloak OIDC Authorization Code para a demonstração; ligação do claim assinado `app_user_id` a perfil local ativo sem aprovisionamento automático. Retenção de um ano é pressuposto provisório sem purga; p95 é métrica sem alvo/carga; produção está diferida. Não aprovados ao agente: commit, push, deploy público, eliminação de dados existentes ou alteração do staging. Os commits e estado de branch abaixo descrevem a entrega histórica e não a alteração OIDC atual.
 
 ## Incrementos e verificações
 
 | Incremento | Componentes previstos | Aceitação e verificação | Estado |
 |---|---|---|---|
 | 1 — Base e persistência | `backend/pom.xml`, aplicação/configuração, migration Flyway, seed opt-in, `.env.example`, `compose.yaml`, Dockerfile | Arranque com PostgreSQL; migration reproduzível; seed sem apagar dados; nenhum segredo real no repositório. | Verificado localmente |
-| 2 — Identidade e projetos | Módulos `identity`, `projects`, segurança e erros comuns | Login, perfil, logout, CSRF, autorização direta; CRUD/pesquisa/paginação de projetos e membros. | Verificado localmente |
+| 2 — Identidade e projetos | Módulos `identity`, `projects`, segurança e erros comuns | Login OIDC, resolução de claim para perfil ativo, perfil, logout local, CSRF, autorização direta; CRUD/pesquisa/paginação de projetos e membros. | Implementado e verificado localmente; cópia limpa atual pendente de commit |
 | 3 — Tarefas e colaboração | Módulo `tasks`, validação partilhada e versão otimista | CRUD, filtros, prioridade, vários responsáveis sem duplicados, comentários com autor/data do servidor; integridade e concorrência. | Verificado localmente |
 | 4 — Interface | `frontend/` React/TypeScript/Vite, cliente API e estilos | Cinco vistas ligadas à API, carregamento/vazio/erro/sucesso, formulários preservados e sem duplicação, layout adaptável. | Verificado localmente |
 | 5 — Entrega | Testes backend/frontend, `docs/verification.md`, documentação e OpenAPI | Pelo menos validação, autorização e criação/consulta persistida; build e percurso real; evidência e limitações sem inventar resultados. | Ficha 03 em `e73250d`; revisão visual em `f780a29`; procedimentos de reprodução documentados |
@@ -24,7 +24,7 @@ Cada incremento é analisado e verificado antes do seguinte. O plano pode ser aj
 
 Criar `backend/` com código Java, SQL e testes; `frontend/` com código React, testes e manifests; configuração Docker e exemplo de ambiente. Atualizar requisitos, histórias, restrições, arquitetura, dados, API, README e AGENTS; manter o wireframe da ficha 02 identificado como referência histórica. Não alterar `.idea` nem o índice Git.
 
-Identidade local e seed servem exclusivamente a demonstração. Registo público, recuperação de palavra-passe, anexos, notificações, sprints e operação de produção permanecem fora do âmbito. Não há migração de dados de uma aplicação anterior, porque não existia implementação.
+Keycloak local, realm importado e seed de perfis servem exclusivamente a demonstração. Registo público, recuperação de palavra-passe, anexos, notificações, sprints e operação de produção permanecem fora do âmbito. Não há migração de dados de uma aplicação anterior, porque não existia implementação. V2 preserva hashes antigos e permite perfis OIDC sem hash local.
 
 ## Fecho das verificações
 

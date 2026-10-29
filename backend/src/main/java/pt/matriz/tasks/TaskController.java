@@ -17,7 +17,7 @@ public class TaskController {
         this.identities = identities;
     }
 
-    private String user(Principal principal) { return identities.current(principal.getName()).id(); }
+    private String user(Principal principal) { return identities.current(principal).id(); }
 
     @GetMapping
     public TaskPage list(Principal principal, @PathVariable String projectId,

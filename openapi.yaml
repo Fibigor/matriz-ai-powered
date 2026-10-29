@@ -5,6 +5,13 @@ info:
   description: |
     Contrato da demonstração implementada, não uma API de produção certificada.
     Substitui o contrato parcial/Bearer/responsável único da ficha 02.
+    A autenticação inicia em GET /auth/login e segue OIDC Authorization Code
+    com Keycloak; a aplicação mantém sessão no servidor, CSRF e validação da
+    conta local ativa identificada pelo claim assinado app_user_id. Não cria contas.
+    O logout invalida a sessão Matriz; a sessão do fornecedor de identidade é independente.
+    A retenção anual é apenas um pressuposto provisório, sem eliminação automática;
+    âmbito e evento inicial não estão definidos. p95 é uma métrica a observar,
+    sem meta nem carga de referência aprovadas. Produção está diferida.
     IDs são texto opaco. Datas são instantes UTC. Conteúdo é texto simples.
     Conta ativa e participação são verificadas no servidor em cada operação.
     Projeto alheio e inexistente dão 404 com o mesmo detalhe; membro sem gestão dá 403.
@@ -42,30 +49,18 @@ paths:
                   headerName: { type: string, const: X-CSRF-TOKEN }
                   token: { type: string }
   /auth/login:
-    post:
+    get:
       tags: [Identidade]
       operationId: login
-      summary: Autenticar conta local ativa e renovar identificador da sessão
-      security:
-        - CsrfToken: []
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              required: [username, password]
-              properties:
-                username: { type: string }
-                password: { type: string, writeOnly: true }
+      summary: Iniciar autenticação OIDC com Keycloak
+      description: Redireciona o navegador para o fluxo Authorization Code; o callback OIDC não é uma operação da API pública.
+      security: []
       responses:
-        '200':
-          description: Perfil; cookie JSESSIONID HttpOnly/SameSite Strict.
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/User' }
-        '401': { $ref: '#/components/responses/Failure' }
-        '403': { $ref: '#/components/responses/Failure' }
+        '302':
+          description: Redirecionamento para o endpoint de autorização OIDC.
+          headers:
+            Location:
+              schema: { type: string, const: /oauth2/authorization/keycloak }
   /auth/me:
     get:
       tags: [Identidade]
@@ -451,7 +446,7 @@ components:
       type: apiKey
       in: cookie
       name: JSESSIONID
-      description: Sessão de servidor; timeout inativo 30 min; Secure configurável para HTTPS.
+      description: Sessão Matriz no servidor; timeout inativo 30 min; Secure configurável para HTTPS.
     CsrfToken:
       type: apiKey
       in: header
