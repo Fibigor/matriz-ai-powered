@@ -6,7 +6,7 @@ Decisões aprovadas pelo autor em 29-10-2026: monólito modular mantido; Java 21
 
 | Componente | Implementação e responsabilidade |
 |---|---|
-| Interface | `frontend/src/App.tsx`, `Projects.tsx`, `Tasks.tsx`: login, painel, projetos, detalhe de projeto/tarefa; cliente `api.ts` e estados comuns em `ui.tsx`. |
+| Interface | `frontend/src/App.tsx`, `Layout.tsx`, `Projects.tsx`, `Tasks.tsx`: login, estrutura partilhada, painel, projetos, detalhe de projeto/tarefa; cliente `api.ts` e estados comuns em `ui.tsx`. |
 | Identidade | `backend/.../identity`: Spring Security, BCrypt 12, login form-urlencoded, sessão no servidor, perfil e logout. Conta ativa verificada em cada operação de negócio. |
 | Projetos | `backend/.../projects`: propriedade, participação, CRUD, pesquisa, paginação, autorização e contagens globais. |
 | Tarefas | `backend/.../tasks`: CRUD, estado/prioridade, filtros, atribuições N:M e comentários, com autorização pelo contrato interno do módulo projetos. |
@@ -29,6 +29,14 @@ Edições de projeto/tarefa exigem versão; tarefas também a exigem nas atribui
 Listagens de projetos/tarefas usam retrato `REPEATABLE_READ`; o progresso conta todas as tarefas do projeto, não a página ou filtros. `pagination.totalItems` de tarefas conta o subconjunto filtrado, portanto pode diferir de `progress.total`. Ordenação: criação ascendente e id ascendente.
 
 Frontend desativa a submissão e tem guarda síncrona contra duplicados; conserva texto em falhas e atualiza dados após resposta confirmada. Uma falha de transporte não prova rollback: é apresentada incerteza e não há repetição automática de escritas.
+
+### Organização visual aprovada
+
+Tema escuro/azul com referência visual no [Black Dashboard React](https://github.com/creativetimofficial/black-dashboard-react), mantendo React/TypeScript/Vite e sem importar código, assets ou dependências do template. Por decisão posterior do autor, a estrutura segue um espaço de trabalho ao estilo Jira: barra superior global, navegação lateral compacta, breadcrumbs, links entre vistas e tabelas de projetos/tarefas.
+
+`Layout.tsx` partilha navegação, perfil e saída; em telemóvel usa um `<dialog>` modal nativo com fecho por Escape e mudança de rota. O atalho para o conteúdo mantém a rota hash e o conteúdo focado não fica sob a barra fixa. Formulários, rascunhos, autorização e chamadas à API mantêm as regras existentes.
+
+O painel representa a distribuição atual dos três estados do projeto selecionado, usando os seus agregados globais devolvidos pela API. A seleção corresponde aos projetos da página/pesquisa atual; não se apresentam somas dessa página como totais globais nem séries temporais inexistentes. Não há novas capacidades de Jira, quadros ou sprints.
 
 ### Revisão e limites
 

@@ -6,7 +6,7 @@ Em 29-10-2026 o autor aprovou o âmbito integral da ficha 03, substituindo as ex
 
 O gestor gere o projeto, os membros e as atribuições. Todos os participantes ativos criam, editam e eliminam tarefas e comentam. Responsáveis são participantes ativos do mesmo projeto. A eliminação confirmada remove os dependentes numa transação. Permanecem os limites aprovados: projeto 1–120, tarefa 1–200 e descrições até 2 000 pontos de código após normalização de nome/título.
 
-Aprovados: sessão HttpOnly e CSRF com Spring Security, BCrypt, dados fictícios, dependências Maven/npm, imagens Docker oficiais e serviços locais. Não aprovados: commit, push, deploy público, eliminação de dados existentes ou alteração do staging. `main` está em `d1edc51` (Architecture Pack); esta worktree continua em `feature/ficha-pratica-1`, baseada em `c13da97`, com o staging anterior preservado.
+Aprovados: sessão HttpOnly e CSRF com Spring Security, BCrypt, dados fictícios, dependências Maven/npm, imagens Docker oficiais e serviços locais. Não aprovados ao agente: commit, push, deploy público, eliminação de dados existentes ou alteração do staging. O autor versionou posteriormente a ficha 03 em `e73250d`, observado em `main` e `origin/main`; esta worktree continua em `feature/ficha-pratica-1`, baseada em `c13da97`, com o staging anterior preservado.
 
 ## Incrementos e verificações
 
@@ -16,7 +16,7 @@ Aprovados: sessão HttpOnly e CSRF com Spring Security, BCrypt, dados fictícios
 | 2 — Identidade e projetos | Módulos `identity`, `projects`, segurança e erros comuns | Login, perfil, logout, CSRF, autorização direta; CRUD/pesquisa/paginação de projetos e membros. | Verificado localmente |
 | 3 — Tarefas e colaboração | Módulo `tasks`, validação partilhada e versão otimista | CRUD, filtros, prioridade, vários responsáveis sem duplicados, comentários com autor/data do servidor; integridade e concorrência. | Verificado localmente |
 | 4 — Interface | `frontend/` React/TypeScript/Vite, cliente API e estilos | Cinco vistas ligadas à API, carregamento/vazio/erro/sucesso, formulários preservados e sem duplicação, layout adaptável. | Verificado localmente |
-| 5 — Entrega | Testes backend/frontend, `docs/verification.md`, documentação e OpenAPI | Pelo menos validação, autorização e criação/consulta persistida; build e percurso real; evidência e limitações sem inventar resultados. | Verificações locais concluídas; commit/entrega Git pendentes de aprovação |
+| 5 — Entrega | Testes backend/frontend, `docs/verification.md`, documentação e OpenAPI | Pelo menos validação, autorização e criação/consulta persistida; build e percurso real; evidência e limitações sem inventar resultados. | Verificações originais concluídas; ficha 03 versionada pelo autor em `e73250d` |
 
 Cada incremento é analisado e verificado antes do seguinte. O plano pode ser ajustado com evidência, sem alargar o âmbito autorizado. A revisão crítica final e qualquer refatoração separada são registadas em `verification.md`. Os exemplos de bugs dos anexos são cenários de teste, não bugs observados neste projeto.
 
@@ -32,4 +32,12 @@ Em 29-10-2026: 7 testes Java, 7 testes de componentes e 2 E2E passaram; frontend
 
 O contrato documenta 21 operações; foram verificados YAML, 99 referências, parâmetros de caminho e estrutura de oito respostas reais de leitura. Não foi instalado/executado um validador integral de OpenAPI. O relatório distingue esta limitação de testes funcionais bem-sucedidos.
 
-O autor autorizou parar os serviços locais no final, sem apagar o volume. Não se autorizou commit/push nem alteração do índice. O requisito de versionar a entrega da ficha 03 permanece pendente e não pode ser satisfeito por um clone da branch atual até o autor preparar e aprovar o commit.
+O autor autorizou parar os serviços locais no final, sem apagar o volume. A entrega original foi depois aplicada e versionada pelo autor em `e73250d`. Isso não autoriza o agente a fazer commit/push, alterar o índice ou integrar esse commit nesta worktree.
+
+## Iteração visual posterior
+
+O autor aprovou adaptar a apresentação do Black Dashboard React sem novas dependências e esclareceu a direção final: manter o tema escuro/azul, mas usar navegação e conteúdo de espaço de trabalho ao estilo Jira. Implementação original, não importação do template, da sua stack ou de funcionalidades adicionais.
+
+Criados `frontend/src/Layout.tsx` e `Layout.test.tsx`; atualizados `App.tsx`, `Projects.tsx`, `Tasks.tsx`, `ui.tsx`, `styles.css`, testes de componentes e E2E. Inclui barra global, navegação lateral/modal móvel, breadcrumbs, vistas, tabelas compactas e resumo de um projeto com dados reais. API, autenticação, permissões e dependências mantidas.
+
+Verificação desta iteração: 13 testes de componentes, build TypeScript/Vite e três percursos E2E executados duas vezes (6 execuções sem falhas), com aplicação empacotada em Docker. Inspeção visual desktop/móvel e correção do foco sob a barra superior; detalhe em [verification.md](verification.md). Serviços parados e volume conservado. Alterações visuais e documentais ainda não versionadas.

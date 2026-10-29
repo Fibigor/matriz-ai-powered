@@ -45,16 +45,16 @@ export function Feedback({ error, success }: { error?: string; success?: string 
 export function LoadState({ loading, error, reload, children }: {
   loading: boolean; error: string; reload: () => void; children: ReactNode;
 }) {
-  if (loading) return <p role="status">A carregar…</p>;
-  if (error) return <div><Feedback error={error} /><button onClick={reload}>Tentar novamente</button></div>;
+  if (loading) return <p role="status" className="loading-state"><span className="loading-dot" aria-hidden="true" />A carregar…</p>;
+  if (error) return <div className="resource-error"><Feedback error={error} /><button onClick={reload}>Tentar novamente</button></div>;
   return children;
 }
 
 export function ProgressCard({ progress }: { progress: Progress }) {
   return <section className="progress-card" aria-label="Progresso global do projeto">
-    <strong>{progress.completedPercent}% concluído</strong>
+    <div className="progress-heading"><span className="eyebrow">Progresso global</span><strong>{progress.completedPercent}% concluído</strong></div>
     <progress max={100} value={progress.completedPercent} aria-label="Percentagem concluída" />
-    <span>Total: {progress.total} · Por fazer: {progress.todo} · Em curso: {progress.inProgress} · Concluídas: {progress.done}</span>
+    <span className="progress-breakdown">Total: {progress.total} · Por fazer: {progress.todo} · Em curso: {progress.inProgress} · Concluídas: {progress.done}</span>
     {!progress.total && <span>Sem tarefas</span>}
   </section>;
 }

@@ -23,6 +23,8 @@ O autor aprovou o âmbito alargado da ficha 03 para implementação. Isso não e
 
 Notificações, sprints, anexos, integrações, registo público, recuperação de palavra-passe e relatórios avançados ficam fora do MVP.
 
+A interface mantém o tema escuro/azul inspirado no [Black Dashboard React](https://github.com/creativetimofficial/black-dashboard-react), com estrutura de espaço de trabalho ao estilo Jira: barra superior, navegação lateral, breadcrumbs, vistas e tabelas compactas. Em telemóvel, a navegação abre num diálogo modal. O painel usa as contagens reais do projeto selecionado, não métricas fictícias nem somas de uma página de projetos. Implementação original na stack existente, sem importar o template ou acrescentar dependências.
+
 ## Documentação
 
 | Ficheiro | Conteúdo |
@@ -47,9 +49,23 @@ Pré-requisitos: Docker com Compose. Para desenvolvimento fora dos contentores: 
 Em PowerShell, na raiz do repositório:
 
 ```powershell
-Copy-Item .env.example .env
-docker compose -p matriz-ficha3 up --build -d
+if (-not (Test-Path -LiteralPath .env)) {
+    Copy-Item .env.example .env
+}
+docker compose -p matriz-ficha3 --env-file .env config --quiet
 ```
+
+O comando `config --quiet` valida a configuração sem iniciar serviços nem mostrar os valores das variáveis. Se terminar sem erros, iniciar:
+
+```powershell
+docker compose -p matriz-ficha3 --env-file .env up --build -d
+```
+
+**Erro `required variable POSTGRES_PASSWORD is missing a value`:** o Compose não recebeu uma palavra-passe não vazia para PostgreSQL. `.env.example` é apenas um modelo, não é carregado automaticamente. Criar `.env` com o bloco acima; se já existir, não o substituir: editar apenas as variáveis em falta. Confirmar que o ficheiro se chama `.env` (não `.env.txt`) e que os comandos são executados na raiz do repositório.
+
+Para a demonstração local, `.env.example` fornece `POSTGRES_PASSWORD=matriz-local-example`, `DEMO_ENABLED=true` e `DEMO_PASSWORD=Matriz-Demo-2026!`. `POSTGRES_PASSWORD` é usado pelo Compose tanto para a base de dados como para `DATABASE_PASSWORD` da aplicação; definir apenas `DATABASE_PASSWORD` em `.env` não resolve este erro. Manter `.env` fora do controlo de versões e não partilhar o seu conteúdo.
+
+Se já existir um volume inicializado, usar a palavra-passe com que a base de dados foi criada: alterar `POSTGRES_PASSWORD` no ficheiro não altera a palavra-passe guardada no PostgreSQL. Não apagar o volume para resolver este problema.
 
 Abrir `http://localhost:8080`. PostgreSQL fica exposto apenas em `127.0.0.1:55432`; o serviço da aplicação também é publicado apenas localmente. O Dockerfile compila React e inclui os ficheiros estáticos no JAR. Não há servidor externo de identidade nem mocks no percurso implementado.
 
@@ -103,7 +119,5 @@ npm run test:e2e
 Parar serviços sem apagar o volume: `docker compose -p matriz-ficha3 stop`. Depois, `docker compose -p matriz-ficha3 start` volta a iniciá-los com os dados existentes.
 
 ## Estado da entrega
-
-Código e documentação da ficha 03 na worktree; sem commit, push ou deploy efetuados pelo agente. O staging anterior foi preservado por indicação do autor. A ficha 01 está em `c13da97`; `main` avançou para `d1edc51` (Architecture Pack), mas esta branch continua baseada em `c13da97`.
 
 Antes de produção: rever dependências, políticas de palavras-passe e limitação de tentativas, configurar HTTPS e `COOKIE_SECURE=true`, segredos, retenção, backups, volumes/escala, identidade e acessibilidade. As verificações desta entrega não são certificação de segurança, conformidade ou desempenho.

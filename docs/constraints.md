@@ -12,7 +12,9 @@ O seed é opt-in, com contas fictícias e hashes de palavras-passe; não apaga/r
 
 Continuam proibidos sem nova aprovação: commit, push, deploy público, eliminação de volumes/dados existentes e alteração do staging. As eliminações staged anteriores são preservadas, mesmo que não representem a intenção final de entrega; o autor deve revê-las antes de versionar.
 
-`main` está em `d1edc51` (Architecture Pack). Esta branch permanece em `c13da97`; não foi feita integração/rebase da branch nem inferida aprovação para corrigir o índice.
+O autor aplicou e versionou a ficha 03 em `e73250d`, observado em `main` e `origin/main`, após o Architecture Pack em `d1edc51`. Esta branch permanece em `c13da97`; não foi feita integração/rebase da branch nem inferida aprovação para corrigir o índice.
+
+Na iteração visual posterior, o autor aprovou uma adaptação original sem novas dependências: tema escuro/azul inspirado no Black Dashboard React, com navegação e organização de conteúdo ao estilo Jira. Inclui `Layout.tsx`, testes e ajustes às vistas existentes; não autoriza quadros, backlog, sprints, alterações de permissões/API ou importação da stack do template. As contagens do painel são globais apenas ao projeto selecionado. Foi autorizada execução local para validação, seguida de paragem dos serviços sem apagar o volume.
 
 Questões Q-01 a Q-07 e Q-10 foram decididas para a demonstração nas regras em vigor de `requirements.md`; não se declaram validadas pelo cliente. Q-08/Q-09 permanecem pendentes: escala/SLA, retenção, jurisdição, acessibilidade, backups e conformidade. Identidade empresarial e endurecimento de segurança continuam necessários antes de produção. Sessões locais são a escolha para o exercício, não uma decisão corporativa.
 

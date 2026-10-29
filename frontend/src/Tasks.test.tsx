@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NewTask, ProjectDetail, TaskDetail } from './Tasks';
 import { Projects } from './Projects';
@@ -33,6 +33,32 @@ describe('Criação de tarefas', () => {
     expect(screen.getByLabelText('Título *')).toHaveValue('Texto preservado');
     expect(changed).not.toHaveBeenCalled();
     expect(screen.queryByText(/Tarefa criada/)).not.toBeInTheDocument();
+  });
+
+  describe('Indicadores do painel', () => {
+    beforeEach(() => vi.resetAllMocks());
+
+    it('usa os totais do projeto selecionado, não soma uma página como se fosse o conjunto global', async () => {
+      const alpha = { ...page.project, progress: { total: 5, todo: 2, inProgress: 1, done: 2, completedPercent: 40 } };
+      const beta = { ...page.project, id: 'beta', name: 'Beta', progress: { total: 2, todo: 0, inProgress: 0, done: 2, completedPercent: 100 } };
+      vi.mocked(api).mockResolvedValue({ items: [alpha, beta], pagination: { page: 1, pageSize: 20, totalItems: 40, totalPages: 2 } });
+      render(<Projects dashboard />);
+      const summary = await screen.findByRole('region', { name: 'Resumo do projeto' });
+      expect(within(summary).getByRole('article', { name: 'Por fazer: 2' })).toBeInTheDocument();
+      expect(within(summary).getByRole('img', { name: 'Tarefas por estado de Alfa' })).toBeInTheDocument();
+      await userEvent.selectOptions(within(summary).getByRole('combobox', { name: 'Projeto do resumo' }), 'beta');
+      expect(within(summary).getByRole('article', { name: 'Por fazer: 0' })).toBeInTheDocument();
+      expect(within(summary).getByText('2 de 2 tarefas concluídas')).toBeInTheDocument();
+      expect(within(summary).getByRole('img', { name: 'Tarefas por estado de Beta' })).toBeInTheDocument();
+    });
+
+    it('mostra o vazio sem fabricar indicadores para projetos inexistentes', async () => {
+      vi.mocked(api).mockResolvedValue({ items: [], pagination: { page: 1, pageSize: 20, totalItems: 0, totalPages: 0 } });
+      render(<Projects dashboard />);
+      expect(await screen.findByText('Sem projetos acessíveis.')).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: 'Resumo do projeto' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    });
   });
 
   describe('Criação de projetos', () => {

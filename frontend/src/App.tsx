@@ -4,6 +4,7 @@ import type { User } from './types';
 import { Projects } from './Projects';
 import { ProjectDetail, TaskDetail } from './Tasks';
 import { Feedback, submit, useMutation } from './ui';
+import { Layout } from './Layout';
 
 function subscribe(callback: () => void) {
   window.addEventListener('hashchange', callback);
@@ -15,7 +16,16 @@ function Login({ loggedIn, notice }: { loggedIn: (user: User) => void; notice: s
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const mutation = useMutation();
-  return <main className="login"><h1>Entrar na Matriz</h1><p>Gestão de projetos e tarefas</p>
+  return <main className="login-page">
+    <section className="login-intro">
+      <div className="login-brand"><span className="brand-mark" aria-hidden="true">M</span> MATRIZ</div>
+      <p className="eyebrow">O seu espaço de trabalho</p>
+      <h2>Menos dispersão.<br /><span>Mais progresso.</span></h2>
+      <p>Organize projetos, partilhe o trabalho com a equipa e acompanhe cada passo.</p>
+      <div className="login-decoration" aria-hidden="true"><span /><span /><span /><span /><span /><span /><span /></div>
+    </section>
+    <section className="card login-card"><p className="eyebrow">Bem-vindo de volta</p>
+    <h1>Entrar na Matriz</h1><p className="muted">O próximo passo começa aqui.</p>
     <Feedback error={mutation.error || notice} />
     <form onSubmit={submit(() => void mutation.run(async () => {
       const user = await api<User>('/auth/login', { method: 'POST', body: new URLSearchParams({ username, password }) });
@@ -25,11 +35,14 @@ function Login({ loggedIn, notice }: { loggedIn: (user: User) => void; notice: s
       <label>Palavra-passe<input type="password" autoComplete="current-password" required value={password} onChange={event => setPassword(event.target.value)} /></label>
       <button disabled={mutation.busy}>{mutation.busy ? 'A entrar…' : 'Entrar'}</button>
     </form>
+    <p className="login-note">Utilize a conta disponibilizada para aceder ao seu espaço.</p>
+    </section>
   </main>;
 }
 
 export default function App() {
-  const route = useSyncExternalStore(subscribe, hash).replace(/^#\/?/, '').split('/');
+  const path = useSyncExternalStore(subscribe, hash).replace(/^#\/?/, '');
+  const route = path.split('/');
   const [user, setUser] = useState<User>();
   const [starting, setStarting] = useState(true);
   const [notice, setNotice] = useState('');
@@ -42,7 +55,7 @@ export default function App() {
     }).finally(() => setStarting(false));
     return () => window.removeEventListener('session-expired', expired);
   }, []);
-  if (starting) return <main><p role="status">A verificar sessão…</p></main>;
+  if (starting) return <main className="session-loading"><p role="status">A verificar sessão…</p></main>;
   if (!user) return <Login loggedIn={value => { setUser(value); setNotice(''); }} notice={notice} />;
   let content = <Projects dashboard />;
   if (route[0] === 'projects') {
@@ -50,12 +63,9 @@ export default function App() {
     else if (route[1]) content = <ProjectDetail key={route[1]} id={route[1]} />;
     else content = <Projects />;
   }
-  return <>
-    <header><a className="brand" href="#/">MATRIZ</a><nav aria-label="Navegação principal"><a href="#/">Painel</a><a href="#/projects">Projetos</a></nav>
-      <span>{user.displayName}</span><button disabled={logout.busy} onClick={() => void logout.run(async () => {
+  return <Layout user={user} route={path} busy={logout.busy} onLogout={() => void logout.run(async () => {
         await api('/auth/logout', { method: 'POST' }); setUser(undefined); setNotice('Sessão terminada.'); window.location.hash = '/';
-      }, '')}>Sair</button>
-    </header>
-    <main><Feedback error={logout.error} />{content}</main><footer>Matriz · Demonstração académica · Dados fictícios</footer>
-  </>;
+      }, '')}>
+    <Feedback error={logout.error} />{content}
+  </Layout>;
 }

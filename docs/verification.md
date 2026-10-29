@@ -1,12 +1,36 @@
-# Matriz — Verificação da ficha 03
+# Matriz — Verificação da ficha 03 e interface
 
 ## Identificação e alcance
 
 Execução local em 29-10-2026, aplicação 0.3.0. Stack aprovada: Java 21/Spring Boot 3.5.7, React 19.2/TypeScript 5.9, PostgreSQL 17, monólito modular. No host: Windows, Maven 3.9.9, Node 25.6 e Docker Desktop 29.8; o Dockerfile compila com Node 22 e Java 21.
 
-Branch `feature/ficha-pratica-1`, base `c13da97` (Specification Pack). `main` está em `d1edc51` (Architecture Pack). **A ficha 03 ainda não está num commit:** o autor exigiu aprovação prévia e preservação do staging, que contém onze eliminações anteriores. Não foi executado `git add`, commit, push, merge ou rebase. Os resultados abaixo referem-se aos ficheiros da worktree, não a uma versão Git já publicada.
+Branch `feature/ficha-pratica-1`, base `c13da97` (Specification Pack). Após a entrega original, o autor aplicou e versionou a ficha 03 em `e73250d` (`feat: full stack implementation-plan.md and setup`), observado em `main` e `origin/main`. Os ficheiros da implementação foram comparados com esse commit antes da revisão visual e correspondiam. A worktree e o staging, com onze eliminações anteriores, não foram integrados/reparados pelo agente. Não foi executado `git add`, commit, push, merge ou rebase pelo agente.
 
 O âmbito alargado e as regras de acesso foram aprovados antes de implementar. Limites 1–120/1–200/2 000 mantidos por decisão do autor, em vez de copiar os limites meramente exemplificativos da ficha. Não se presume aceitação pelo cliente ou preparação para produção.
+
+## Iteração visual posterior — tema escuro e estrutura Jira
+
+Direção aprovada pelo autor: manter a paleta escura/azul inspirada no Black Dashboard React e reorganizar a interface como espaço de trabalho ao estilo Jira, sem novas dependências nem mudanças de API/permissões. Barra superior global, navegação lateral compacta, breadcrumbs, vistas e tabelas; navegação móvel em diálogo modal nativo.
+
+| Verificação desta iteração | Resultado observado |
+|---|---|
+| Em `frontend`: `npm test` | 13 testes de componentes passaram: os 7 existentes, 4 do layout e 2 sobre dados reais/ausência de projetos no painel. |
+| Em `frontend`: `npm run build` | TypeScript e Vite concluídos após a correção final de foco/scroll. |
+| `docker compose -p matriz-ficha3 --env-file .env.example up --build -d` | Imagem reconstruída; aplicação respondeu HTTP 200 na porta 8080 com a base de dados existente. |
+| Em `frontend`, `PLAYWRIGHT_BASE_URL=http://127.0.0.1:8080`; `npm run test:e2e -- --repeat-each=2` | 3 percursos repetidos duas vezes: 6 execuções passaram em 19,6 s. Inclui CRUD/colaboração/reload, credenciais inválidas e nova navegação desktop/móvel. |
+| Navegação e dados reais | Alfa apresenta 2/1/2 tarefas e 2 de 5 concluídas; seleção não soma a página de projetos. O menu abre, recebe foco, permite Tab, impede foco no logout de fundo, fecha com Escape/devolve foco e fecha ao navegar. |
+| Layout responsivo | Sem overflow horizontal do documento a 390 px em painel, lista de projetos, projeto e tarefa; tabelas podem deslocar horizontalmente dentro do seu contentor. Capturas revistas a 1440 px e 390 px, incluindo login, painel, menu, projeto e tarefa. |
+| Atalho para o conteúdo | Mantém a rota hash, foca `main` e não o coloca sob a barra superior. `scroll-margin-top` corrigiu a sobreposição reproduzida no browser. |
+
+Uma execução intermédia do percurso completo falhou após reload de comentários. Reprodução com POST intercetado antes do envio confirmou que `getByText` correspondia ao `TEXTAREA` com o rascunho mesmo sem comentário persistido. O E2E passou a exigir o texto dentro de um `article` de comentário antes e depois do reload; não se aumentou o timeout nem se alterou a persistência para satisfazer o teste. As duas repetições finais passaram.
+
+Não foram alterados backend, contrato API, dependências, políticas de acesso ou dados existentes deliberadamente. Os percursos concluídos eliminam os seus próprios projetos; o ensaio interrompido conserva os seus dados fictícios, sem limpeza indiscriminada. Não se repetiram os testes Java ou o audit npm nesta iteração exclusivamente visual; os resultados originais abaixo são históricos, não novas execuções.
+
+Fecho desta iteração: aplicação/PostgreSQL parados; volume `matriz-ficha3_matriz_data` existente; portas 8080, 5173 e 55432 sem listeners. Alterações visuais/documentais ainda na worktree, sem commit/push e sem alteração do staging.
+
+## Registo original da ficha 03
+
+As secções seguintes conservam as verificações da entrega original, anteriores à iteração visual e ao commit manual do autor.
 
 ## Nove cenários da ficha
 
@@ -97,7 +121,7 @@ Oportunidade identificada: evitar duplicar validação, autorização e estados 
 - Não houve auditoria independente, pentest, ensaio de carga ou certificação de acessibilidade/segurança. O audit npm não cobre dependências Maven, imagens, configuração operacional ou falhas de lógica.
 - Não foram simuladas todas as falhas de rede/base de dados nem todas as corridas concorrentes; conflito de versão e revogação têm testes, mas não há ensaio multicliente exaustivo. A resposta de transporte pode ser incerta e não deve ser repetida automaticamente.
 - Seed local é opt-in e não reinicializa uma demonstração já existente. Contas fictícias e palavra-passe pública não servem produção. Retenção, identidade empresarial, HTTPS, limitação de tentativas, backups e recuperação continuam pendentes.
-- Foi verificado o build Docker com contexto de fontes e exclusão de builds/dependências locais, não um clone Git contendo a ficha 03: **o commit ainda não existe**. Rever as onze eliminações staged e aprovar uma mensagem de commit é intervenção humana pendente; nenhum ficheiro necessário da ficha 03 foi adicionado ao índice pelo agente.
+- Na entrega original foi verificado o build Docker com contexto de fontes e exclusão de builds/dependências locais, antes de existir um commit da ficha 03. O autor versionou-a posteriormente em `e73250d`. Esta worktree mantém as onze eliminações staged anteriores; nenhum ficheiro foi adicionado ao índice pelo agente e a iteração visual ainda não foi versionada.
 - O autor autorizou parar os serviços locais ao terminar, conservando o volume `matriz-ficha3_matriz_data`. Para voltar a executar, seguir [README.md](../README.md); nunca remover o volume para um simples reinício.
 
-Fecho observado: aplicação e PostgreSQL parados; volume `matriz-ficha3_matriz_data` confirmado existente; portas locais 8080, 5173 e 55432 sem listeners. Verificação documental final: 32 ligações locais existentes, nove cenários presentes e blocos de histórico equilibrados. O índice mantém as mesmas onze eliminações anteriores.
+Fecho observado na entrega original: aplicação e PostgreSQL parados; volume `matriz-ficha3_matriz_data` confirmado existente; portas locais 8080, 5173 e 55432 sem listeners. Verificação documental dessa entrega: 32 ligações locais existentes, nove cenários presentes e blocos de histórico equilibrados. O índice manteve as mesmas onze eliminações anteriores.

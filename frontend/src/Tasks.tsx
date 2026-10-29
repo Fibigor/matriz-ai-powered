@@ -6,11 +6,12 @@ import { priorityLabels, statusLabels } from './types';
 import { Feedback, FieldError, LoadState, Pager, ProgressCard, submit, useMutation, useResource } from './ui';
 
 export function TaskList({ data }: { data: TaskPage }) {
-  if (!data.items.length) return <p>Sem tarefas para os critérios selecionados.</p>;
+  if (!data.items.length) return <p className="empty-state">Sem tarefas para os critérios selecionados.</p>;
   return <div className="table-scroll"><table><thead><tr><th>Tarefa</th><th>Estado</th><th>Prioridade</th><th>Responsáveis</th></tr></thead>
     <tbody>{data.items.map(task => <tr key={task.id}>
       <td><a href={`#/projects/${task.projectId}/tasks/${task.id}`}>{task.title}</a></td>
-      <td>{statusLabels[task.status]}</td><td>{priorityLabels[task.priority]}</td>
+      <td><span className="status-badge" data-status={task.status}>{statusLabels[task.status]}</span></td>
+      <td><span className="priority-label" data-priority={task.priority}>{priorityLabels[task.priority]}</span></td>
       <td>{task.assignees.map(person => person.displayName).join(', ') || 'Sem responsáveis'}</td>
     </tr>)}</tbody></table></div>;
 }
@@ -20,7 +21,7 @@ export function NewTask({ projectId, changed }: { projectId: string; changed: (t
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('MEDIUM');
   const mutation = useMutation();
-  return <section><h2>Nova tarefa</h2><Feedback {...mutation} />
+  return <section className="card new-task-card"><p className="eyebrow">O próximo passo</p><h2>Nova tarefa</h2><Feedback {...mutation} />
     <form onSubmit={submit(() => void mutation.run(async () => {
       const task = await write<Task>(`/projects/${projectId}/tasks`, 'POST', { title, description, priority });
       setTitle(''); setDescription(''); changed(task);
@@ -30,7 +31,7 @@ export function NewTask({ projectId, changed }: { projectId: string; changed: (t
       <label>Prioridade<select value={priority} onChange={event => setPriority(event.target.value as Priority)}>
         {Object.entries(priorityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </select></label>
-      <p>Estado inicial: Por fazer · Sem responsáveis</p>
+      <p className="form-note">Estado inicial: Por fazer · Sem responsáveis</p>
       <button disabled={mutation.busy}>{mutation.busy ? 'A criar…' : 'Criar tarefa'}</button>
     </form>
   </section>;
@@ -43,13 +44,20 @@ export function ProjectDetail({ id }: { id: string }) {
   const [revision, setRevision] = useState(0);
   const resource = useResource<TaskPage>(`/projects/${id}/tasks?` + query({ status, priority, page }), revision);
   const changed = () => setRevision(value => value + 1);
-  return <><a href="#/projects">← Projetos</a>
+  return <><nav className="breadcrumbs" aria-label="Localização"><a href="#/projects">← Projetos</a><span aria-hidden="true">/</span><span>Detalhe do projeto</span></nav>
+    <div className="project-detail-layout"><div className="project-main">
     <LoadState {...resource}>{resource.data && <>
-      <h1>{resource.data.project.name}</h1><p>{resource.data.project.description}</p>
+      <div className="page-heading"><div><p className="eyebrow">Detalhe do projeto</p>
+        <h1>{resource.data.project.name}</h1><p className="muted plain-text">{resource.data.project.description}</p></div>
+        <span className="role-badge">{resource.data.project.currentRole === 'MANAGER' ? 'Gestor' : 'Membro'}</span>
+      </div>
       <ProgressCard progress={resource.data.progress} />
+      <div className="management-grid">
       <ProjectSettings key={resource.data.project.id} project={resource.data.project} changed={changed} />
       <Members project={resource.data.project} revision={revision} />
-      <h2>Tarefas</h2><div className="filters">
+      </div>
+      <section className="card task-list-card"><div className="panel-heading"><div><p className="eyebrow">Trabalho em equipa</p><h2>Tarefas</h2></div></div>
+      <div className="filters">
         <label>Filtrar por estado<select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}>
           <option value="">Todos os estados</option>{Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select></label>
@@ -58,7 +66,9 @@ export function ProjectDetail({ id }: { id: string }) {
         </select></label>
       </div>
       <TaskList data={resource.data} /><Pager pagination={resource.data.pagination} change={setPage} />
+      </section>
     </>}</LoadState>
+    </div><div className="project-side">
     {resource.data && !resource.error && <NewTask projectId={id} changed={task => {
       const pagination = resource.data?.pagination;
       if (pagination && (!status || task.status === status) && (!priority || task.priority === priority)) {
@@ -66,6 +76,7 @@ export function ProjectDetail({ id }: { id: string }) {
       }
       changed();
     }} />}
+    </div></div>
   </>;
 }
 
@@ -76,7 +87,7 @@ function TaskEditor({ task, changed, reload }: { task: Task; changed: () => void
   const [priority, setPriority] = useState<Priority>(task.priority);
   const mutation = useMutation();
   const base = `/projects/${task.projectId}/tasks/${task.id}`;
-  return <section><h2>Editar tarefa</h2><Feedback {...mutation} />
+  return <section className="card"><p className="eyebrow">Dê forma ao trabalho</p><h2>Editar tarefa</h2><Feedback {...mutation} />
     <form onSubmit={submit(() => void mutation.run(async () => {
       await write(base, 'PUT', { title, description, status, priority, version: task.version }); changed();
     }))}>
@@ -105,7 +116,7 @@ function Assignments({ task, project, changed }: { task: Task; project: Project;
   const members = useResource<Member[]>('/projects/' + project.id + '/members');
   const eligible = members.data?.filter(person => person.active && !task.assignees.some(assigned => assigned.id === person.id)) ?? [];
   const manager = project.currentRole === 'MANAGER';
-  return <section><h2>Responsáveis</h2><Feedback {...mutation} />
+  return <section className="card"><p className="eyebrow">Quem faz acontecer</p><h2>Responsáveis</h2><Feedback {...mutation} />
     {!task.assignees.length && <p>Sem responsáveis.</p>}
     <ul>{task.assignees.map(person => <li key={person.id}>{person.displayName}{' '}
       {manager && <button disabled={mutation.busy} onClick={() => void mutation.run(async () => {
@@ -129,10 +140,10 @@ function Comments({ task }: { task: Task }) {
   const path = `/projects/${task.projectId}/tasks/${task.id}/comments`;
   const resource = useResource<CommentPage>(path + '?' + query({ page }), revision);
   const mutation = useMutation();
-  return <section><h2>Comentários</h2><Feedback {...mutation} />
+  return <section className="card comments-card"><p className="eyebrow">A conversa continua</p><h2>Comentários</h2><Feedback {...mutation} />
     <LoadState {...resource}>
       {!resource.data?.items.length && <p>Sem comentários.</p>}
-      {resource.data?.items.map(comment => <article key={comment.id}>
+      {resource.data?.items.map(comment => <article className="comment" key={comment.id}>
         <strong>{comment.author.displayName}</strong> · <time dateTime={comment.createdAt}>{new Date(comment.createdAt).toLocaleString('pt-PT')}</time>
         <p className="plain-text">{comment.content}</p>
       </article>)}
@@ -156,16 +167,20 @@ export function TaskDetail({ projectId, id }: { projectId: string; id: string })
   const project = useResource<Project>('/projects/' + projectId, revision);
   const reload = () => setRevision(value => value + 1);
   const changed = () => { setNotice('Alteração guardada.'); reload(); };
-  return <><a href={'#/projects/' + projectId}>← Projeto</a>
+  return <><nav className="breadcrumbs" aria-label="Localização"><a href="#/projects">Projetos</a><span aria-hidden="true">/</span>
+    <a href={'#/projects/' + projectId}>← Projeto</a><span aria-hidden="true">/</span><span>Tarefa</span></nav>
     <Feedback success={notice} />
+    <div className="task-detail-layout"><div>
     <LoadState loading={task.loading || project.loading} error={task.error || project.error} reload={reload}>
       {task.data && project.data && <>
-        <h1>{task.data.title}</h1>
-        <p>{statusLabels[task.data.status]} · Prioridade {priorityLabels[task.data.priority]}</p>
+        <div className="page-heading"><div><p className="eyebrow">Detalhe da tarefa</p><h1>{task.data.title}</h1>
+        <p className="muted">{statusLabels[task.data.status]} · Prioridade {priorityLabels[task.data.priority]}</p></div></div>
         <TaskEditor key={task.data.id + ':' + task.data.version} task={task.data} changed={changed} reload={reload} />
         <Assignments task={task.data} project={project.data} changed={changed} />
       </>}
     </LoadState>
+    </div><div className="task-side">
     {task.data && !task.error && <Comments key={task.data.id} task={task.data} />}
+    </div></div>
   </>;
 }
