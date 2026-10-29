@@ -1,434 +1,602 @@
 openapi: 3.1.0
 info:
-  title: Matriz — Contrato parcial de tarefas
-  version: 0.2.0
+  title: Matriz — API da ficha 03
+  version: 0.3.0
   description: |
-    Architecture Pack da ficha 02. Duas operações propostas, sem servidor implementado.
-    Base: docs/requirements.md, docs/user-stories.md e docs/architecture.md.
-    Não é a API completa do MVP.
-
-    Bearer opaco é uma convenção preliminar do contrato; não escolhe JWT,
-    fornecedor de identidade ou fluxo de autenticação. A conta deve estar ativa.
-    A participação no projeto é verificada em cada operação, independentemente do token.
-    Identificadores são texto opaco, sem formato físico imposto.
-    Os exemplos são fictícios. Datas de resposta são instantes UTC.
-tags:
-  - name: Tarefas
-    description: Consulta paginada e criação de tarefas de um projeto autorizado.
+    Contrato da demonstração implementada, não uma API de produção certificada.
+    Substitui o contrato parcial/Bearer/responsável único da ficha 02.
+    IDs são texto opaco. Datas são instantes UTC. Conteúdo é texto simples.
+    Conta ativa e participação são verificadas no servidor em cada operação.
+    Projeto alheio e inexistente dão 404 com o mesmo detalhe; membro sem gestão dá 403.
+    Campos JSON desconhecidos são recusados com 400; formato/tipo inválido dá 400;
+    validação semântica 422, versão antiga 409, falha de dados 503.
+    Falha de transporte não prova rollback: não repetir escritas automaticamente.
+    Listas paginadas usam createdAt ascendente e id ascendente como desempate.
+    Pagination é baseada em 1; página além do fim é vazia; zero itens implica zero páginas.
+    Nomes, títulos e comentários são aparados nas extremidades; descrições e pesquisa
+    conservam espaços. Limites em pontos de código Unicode.
+servers:
+  - url: /api
 security:
-  - BearerAuth: []
+  - Session: []
+tags:
+  - name: Identidade
+  - name: Projetos
+  - name: Tarefas
 paths:
-  /projects/{projectId}/tasks:
-    parameters:
-      - $ref: '#/components/parameters/ProjectId'
+  /auth/csrf:
     get:
-      tags: [Tarefas]
-      operationId: listProjectTasks
-      summary: Consultar tarefas e progresso de um projeto
-      description: |
-        Participantes ativos (gestor ou membro) podem consultar.
-        Ordenação estável por createdAt ascendente e, em empate, id ascendente.
-        Não existem pesquisa nem filtros neste contrato.
-        items é paginado; progress conta todas as tarefas do projeto.
-        Contexto, página, total e progresso refletem o mesmo retrato dos dados.
-        Página além da última devolve items vazio e mantém total e progresso.
-        Sem tarefas, totalPages é 0, items vazio e todas as contagens são 0.
-      parameters:
-        - name: page
-          in: query
-          description: Página pretendida, começando em 1.
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: pageSize
-          in: query
-          description: Dimensão da página; limite proposto para este contrato.
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      tags: [Identidade]
+      operationId: getCsrf
+      summary: Obter token atual de CSRF, incluindo antes do login
+      security: []
       responses:
         '200':
-          description: Página autorizada e progresso global do projeto.
+          description: Token associado à sessão; atualizar após login/logout.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskPage'
-              example:
-                project:
-                  id: proj-alfa
-                  name: Alfa
-                  description: Preparação do MVP da Matriz
-                  currentRole: MANAGER
-                items:
-                  - id: task-01
-                    projectId: proj-alfa
-                    title: Definir âmbito
-                    description: Delimitar o MVP.
-                    status: DONE
-                    assignee: {userId: user-ana, displayName: Ana}
-                    version: 2
-                    createdAt: '2026-10-22T10:00:00Z'
-                    updatedAt: '2026-10-22T11:00:00Z'
-                  - id: task-02
-                    projectId: proj-alfa
-                    title: Rever requisitos
-                    description: Rever os critérios de aceitação.
-                    status: DONE
-                    assignee: {userId: user-bruno, displayName: Bruno}
-                    version: 2
-                    createdAt: '2026-10-22T10:01:00Z'
-                    updatedAt: '2026-10-22T11:01:00Z'
-                  - id: task-03
-                    projectId: proj-alfa
-                    title: Desenhar modelo
-                    description: Propor entidades e relações.
-                    status: IN_PROGRESS
-                    assignee: {userId: user-ana, displayName: Ana}
-                    version: 2
-                    createdAt: '2026-10-22T10:02:00Z'
-                    updatedAt: '2026-10-22T11:02:00Z'
-                  - id: task-04
-                    projectId: proj-alfa
-                    title: Preparar contrato
-                    description: Documentar as duas operações.
-                    status: TODO
-                    assignee: null
-                    version: 1
-                    createdAt: '2026-10-22T10:03:00Z'
-                    updatedAt: '2026-10-22T10:03:00Z'
-                  - id: task-05
-                    projectId: proj-alfa
-                    title: Validar protótipo
-                    description: Rever a correspondência com o MVP.
-                    status: TODO
-                    assignee: {userId: user-carla, displayName: Carla}
-                    version: 2
-                    createdAt: '2026-10-22T10:04:00Z'
-                    updatedAt: '2026-10-22T11:04:00Z'
-                pagination: {page: 1, pageSize: 20, totalItems: 5, totalPages: 1}
-                progress: {total: 5, todo: 2, inProgress: 1, done: 2, completedPercent: 40}
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/Unavailable'
+                type: object
+                required: [headerName, token]
+                properties:
+                  headerName: { type: string, const: X-CSRF-TOKEN }
+                  token: { type: string }
+  /auth/login:
     post:
-      tags: [Tarefas]
-      operationId: createProjectTask
-      summary: Criar uma tarefa em Por fazer e sem responsável
-      description: |
-        Qualquer participante ativo do projeto pode criar tarefas.
-        O título é normalizado removendo espaços Unicode das extremidades
-        e depois validado: 1 a 200 pontos de código Unicode, sem truncar.
-        O limite após normalização é uma regra da aplicação, não um maxLength
-        do título bruto do pedido. A descrição não é normalizada.
-        Não são aceites estado, responsável, projeto no corpo ou metadados.
-        A criação é atómica e só há resposta de sucesso após persistência.
-        Uma falha de transporte após gravação pode deixar o resultado incerto;
-        o cliente não deve repetir automaticamente o pedido.
+      tags: [Identidade]
+      operationId: login
+      summary: Autenticar conta local ativa e renovar identificador da sessão
+      security:
+        - CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, writeOnly: true }
+      responses:
+        '200':
+          description: Perfil; cookie JSESSIONID HttpOnly/SameSite Strict.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Failure' }
+        '403': { $ref: '#/components/responses/Failure' }
+  /auth/me:
+    get:
+      tags: [Identidade]
+      operationId: currentUser
+      summary: Consultar perfil autenticado e ativo
+      responses:
+        '200':
+          description: Perfil atual.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Failure' }
+  /auth/logout:
+    post:
+      tags: [Identidade]
+      operationId: logout
+      summary: Invalidar sessão e remover cookie
+      security:
+        - CsrfToken: []
+      responses:
+        '204': { description: Sessão invalidada. }
+        '403': { $ref: '#/components/responses/Failure' }
+  /projects:
+    get:
+      tags: [Projetos]
+      operationId: listProjects
+      summary: Listar projetos acessíveis com pesquisa pelo nome
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string, default: '' }
+          description: Substring literal do nome, sem distinção entre maiúsculas/minúsculas.
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Projetos acessíveis correspondentes à pesquisa.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pagination]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Project' } }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+        default: { $ref: '#/components/responses/Failure' }
+    post:
+      tags: [Projetos]
+      operationId: createProject
+      summary: Criar projeto e participação do gestor autenticado atomicamente
+      security:
+        - Session: []
+          CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateProject' }
+      responses:
+        '201':
+          description: Projeto persistido; versão 1 e zero tarefas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [Projetos]
+      operationId: getProject
+      summary: Consultar projeto e agregados globais
+      responses:
+        '200':
+          description: Contexto autorizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        default: { $ref: '#/components/responses/Failure' }
+    put:
+      tags: [Projetos]
+      operationId: updateProject
+      summary: Gestor edita projeto com versão atual
+      security:
+        - Session: []
+          CsrfToken: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTask'
-            example:
-              title: '  Preparar contrato  '
-              description: Documentar as duas operações.
+              allOf:
+                - $ref: '#/components/schemas/ProjectFields'
+                - type: object
+                  required: [version]
+                  properties:
+                    version: { $ref: '#/components/schemas/Version' }
+              unevaluatedProperties: false
+      responses:
+        '200':
+          description: Projeto atualizado; versão incrementada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Project' }
+        default: { $ref: '#/components/responses/Failure' }
+    delete:
+      tags: [Projetos]
+      operationId: deleteProject
+      summary: Gestor elimina projeto, tarefas, atribuições, comentários e participações
+      description: Operação transacional; não elimina utilizadores. A interface exige confirmação.
+      security:
+        - Session: []
+          CsrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/Version'
+      responses:
+        '204': { description: Projeto e dependentes removidos. }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}/members:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [Projetos]
+      operationId: listMembers
+      summary: Participante consulta membros atuais do projeto
+      description: Lista não paginada, ordenada por displayName e id; não é diretório de contas.
+      responses:
+        '200':
+          description: Membros atuais, incluindo gestor, com estado ativo.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Member' } }
+        default: { $ref: '#/components/responses/Failure' }
+    post:
+      tags: [Projetos]
+      operationId: addMember
+      summary: Gestor adiciona conta ativa existente por id exato
+      description: Adição repetida não duplica a participação.
+      security:
+        - Session: []
+          CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [userId]
+              properties:
+                userId: { $ref: '#/components/schemas/Id' }
+      responses:
+        '204': { description: Participação existente ou criada. }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}/members/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/UserId'
+    delete:
+      tags: [Projetos]
+      operationId: removeMember
+      summary: Gestor remove membro sem atribuições
+      description: Gestor não removível; atribuições, mesmo concluídas, bloqueiam remoção (409).
+      security:
+        - Session: []
+          CsrfToken: []
+      responses:
+        '204': { description: Participação ausente; acesso revogado nas operações seguintes. }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}/tasks:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+    get:
+      tags: [Tarefas]
+      operationId: listTasks
+      summary: Consultar tarefas filtradas e progresso global
+      description: |
+        items/pagination refletem filtros; project/progress refletem todas as tarefas do projeto.
+        Leitura no mesmo retrato transacional. Não confundir progress.total com totalItems filtrado.
+      parameters:
+        - name: status
+          in: query
+          schema: { $ref: '#/components/schemas/Status' }
+        - name: priority
+          in: query
+          schema: { $ref: '#/components/schemas/Priority' }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Página filtrada com progresso global.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TaskPage' }
+        default: { $ref: '#/components/responses/Failure' }
+    post:
+      tags: [Tarefas]
+      operationId: createTask
+      summary: Participante cria tarefa TODO sem responsáveis
+      security:
+        - Session: []
+          CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  description: Entre 1 e 200 pontos de código após remover espaços nas extremidades.
+                description: { $ref: '#/components/schemas/OptionalDescription' }
+                priority:
+                  oneOf:
+                    - $ref: '#/components/schemas/Priority'
+                    - type: 'null'
+                  default: MEDIUM
+            example: { title: Preparar demonstração, description: Rever o fluxo completo., priority: HIGH }
       responses:
         '201':
-          description: Tarefa persistida, em TODO, sem responsável e com versão 1.
+          description: Tarefa persistida; versão 1, createdAt igual a updatedAt.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}/tasks/{taskId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Tarefas]
+      operationId: getTask
+      summary: Participante consulta tarefa do mesmo projeto
+      responses:
+        '200':
+          description: Tarefa atual.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        default: { $ref: '#/components/responses/Failure' }
+    put:
+      tags: [Tarefas]
+      operationId: updateTask
+      summary: Participante substitui campos editáveis com versão atual
+      description: Transições livres entre estados; concluir não exige responsável.
+      security:
+        - Session: []
+          CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [title, status, priority, version]
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  description: Entre 1 e 200 pontos de código após remover espaços nas extremidades.
+                description: { $ref: '#/components/schemas/OptionalDescription' }
+                status: { $ref: '#/components/schemas/Status' }
+                priority: { $ref: '#/components/schemas/Priority' }
+                version: { $ref: '#/components/schemas/Version' }
+      responses:
+        '200':
+          description: Tarefa atualizada e versão incrementada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        default: { $ref: '#/components/responses/Failure' }
+    delete:
+      tags: [Tarefas]
+      operationId: deleteTask
+      summary: Participante elimina tarefa, atribuições e comentários
+      security:
+        - Session: []
+          CsrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/Version'
+      responses:
+        '204': { description: Tarefa e dependentes removidos atomicamente. }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}/tasks/{taskId}/assignments/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/TaskId'
+      - $ref: '#/components/parameters/UserId'
+    put:
+      tags: [Tarefas]
+      operationId: assignTask
+      summary: Gestor atribui participante ativo do mesmo projeto
+      description: N:M; repetir com versão atual não duplica nem incrementa a versão.
+      security:
+        - Session: []
+          CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VersionInput' }
+      responses:
+        '200':
+          description: Tarefa com lista atual de responsáveis.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        default: { $ref: '#/components/responses/Failure' }
+    delete:
+      tags: [Tarefas]
+      operationId: unassignTask
+      summary: Gestor retira uma atribuição com versão atual
+      security:
+        - Session: []
+          CsrfToken: []
+      parameters:
+        - $ref: '#/components/parameters/Version'
+      responses:
+        '200':
+          description: Tarefa com atribuição ausente, restantes preservadas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Task' }
+        default: { $ref: '#/components/responses/Failure' }
+  /projects/{projectId}/tasks/{taskId}/comments:
+    parameters:
+      - $ref: '#/components/parameters/ProjectId'
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [Tarefas]
+      operationId: listComments
+      summary: Participante consulta comentários paginados
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: Comentários com autoria e data persistidas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Task'
-              example:
-                id: task-04
-                projectId: proj-alfa
-                title: Preparar contrato
-                description: Documentar as duas operações.
-                status: TODO
-                assignee: null
-                version: 1
-                createdAt: '2026-10-22T10:03:00Z'
-                updatedAt: '2026-10-22T10:03:00Z'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/ValidationFailed'
-        '500':
-          $ref: '#/components/responses/InternalError'
-        '503':
-          $ref: '#/components/responses/Unavailable'
+                type: object
+                required: [items, pagination]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Comment' } }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+        default: { $ref: '#/components/responses/Failure' }
+    post:
+      tags: [Tarefas]
+      operationId: createComment
+      summary: Participante comenta; autor e data são definidos no servidor
+      security:
+        - Session: []
+          CsrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  description: Entre 1 e 2 000 pontos de código após remover espaços nas extremidades.
+      responses:
+        '201':
+          description: Comentário persistido.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comment' }
+        default: { $ref: '#/components/responses/Failure' }
 components:
   securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      description: |
-        Prova de acesso opaca; não pressupõe JWT. Validar conta ativa e
-        participação atual no projeto. Origem, expiração e revogação do
-        acesso dependem da decisão de identidade ainda pendente.
+    Session:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: Sessão de servidor; timeout inativo 30 min; Secure configurável para HTTPS.
+    CsrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-TOKEN
+      description: Token obtido em GET /auth/csrf; não é credencial de autenticação.
   parameters:
-    ProjectId:
-      name: projectId
-      in: path
-      required: true
-      description: Identificador opaco do projeto; não concede autorização.
-      schema:
-        $ref: '#/components/schemas/Identifier'
+    ProjectId: { name: projectId, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    TaskId: { name: taskId, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    UserId: { name: userId, in: path, required: true, schema: { $ref: '#/components/schemas/Id' } }
+    Version: { name: version, in: query, required: true, schema: { $ref: '#/components/schemas/Version' } }
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+  responses:
+    Failure:
+      description: |
+        400 formato/tipo/campo desconhecido; 401 sessão ausente/inativa;
+        403 CSRF/permissão; 404 recurso indisponível; 409 versão/restrição;
+        422 validação; 503 operação de dados falhou. Não expõe SQL ou conteúdo interno.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
   schemas:
-    Identifier:
-      type: string
-      minLength: 1
-      description: Identificador opaco; o formato físico será definido posteriormente.
-    CreateTask:
+    Id: { type: string, minLength: 1 }
+    Version: { type: integer, format: int64, minimum: 1 }
+    VersionInput:
       type: object
       additionalProperties: false
-      required: [title]
+      required: [version]
       properties:
-        title:
-          type: string
-          pattern: '\S'
-          description: |
-            Deve conter texto. Remover espaços Unicode das extremidades antes
-            de validar o limite de 1–200 pontos de código. O limite normalizado
-            é validado pela aplicação; não há truncagem nem limite bruto
-            equivalente imposto por este schema.
-          x-normalization: trim-unicode-whitespace
-          x-normalized-minLength: 1
-          x-normalized-maxLength: 200
-        description:
-          type: string
-          maxLength: 2000
-          default: ''
-          description: Texto simples, opcional; omitido significa texto vazio.
-    Assignee:
+        version: { $ref: '#/components/schemas/Version' }
+    Status: { type: string, enum: [TODO, IN_PROGRESS, DONE] }
+    Priority: { type: string, enum: [LOW, MEDIUM, HIGH] }
+    OptionalDescription:
+      type: [string, 'null']
+      maxLength: 2000
+      description: Omitida ou null normaliza para string vazia; resposta é sempre string.
+    User:
       type: object
-      additionalProperties: false
-      required: [userId, displayName]
+      required: [id, displayName]
       properties:
-        userId:
-          $ref: '#/components/schemas/Identifier'
-        displayName:
-          type: string
-          minLength: 1
-    Task:
+        id: { $ref: '#/components/schemas/Id' }
+        displayName: { type: string }
+    Member:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required: [active, role]
+          properties:
+            active: { type: boolean }
+            role: { type: string, enum: [MANAGER, MEMBER] }
+    Progress:
       type: object
-      additionalProperties: false
-      required: [id, projectId, title, description, status, assignee, version, createdAt, updatedAt]
+      required: [total, todo, inProgress, done, completedPercent]
+      description: Total global; soma dos três estados; percentagem 0 se vazio, arredondada com meios para cima.
       properties:
-        id:
-          $ref: '#/components/schemas/Identifier'
-        projectId:
-          $ref: '#/components/schemas/Identifier'
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-          pattern: '^\S(?:[\s\S]*\S)?$'
-          description: Título já normalizado, sem espaços nas extremidades.
-        description:
-          type: string
-          maxLength: 2000
-        status:
-          type: string
-          enum: [TODO, IN_PROGRESS, DONE]
-          description: TODO = Por fazer; IN_PROGRESS = Em curso; DONE = Concluída.
-        assignee:
-          description: Zero ou um responsável participante do mesmo projeto.
-          oneOf:
-            - $ref: '#/components/schemas/Assignee'
-            - type: 'null'
-        version:
-          type: integer
-          minimum: 1
-          description: Versão para futura edição com deteção de alterações concorrentes.
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-    ProjectContext:
+        total: { type: integer, minimum: 0 }
+        todo: { type: integer, minimum: 0 }
+        inProgress: { type: integer, minimum: 0 }
+        done: { type: integer, minimum: 0 }
+        completedPercent: { type: integer, minimum: 0, maximum: 100 }
+      example: { total: 5, todo: 2, inProgress: 1, done: 2, completedPercent: 40 }
+    Pagination:
       type: object
-      additionalProperties: false
-      required: [id, name, description, currentRole]
+      required: [page, pageSize, totalItems, totalPages]
       properties:
-        id:
-          $ref: '#/components/schemas/Identifier'
+        page: { type: integer, minimum: 1 }
+        pageSize: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+    ProjectFields:
+      type: object
+      required: [name]
+      properties:
         name:
           type: string
           minLength: 1
-          maxLength: 120
-          pattern: '^\S(?:[\s\S]*\S)?$'
-        description:
-          type: string
-          maxLength: 2000
-        currentRole:
-          type: string
-          enum: [MANAGER, MEMBER]
-          description: Papel da pessoa autenticada neste projeto; não é um perfil global.
-    Pagination:
+          description: Entre 1 e 120 pontos de código após remover espaços nas extremidades.
+        description: { $ref: '#/components/schemas/OptionalDescription' }
+    CreateProject:
+      allOf:
+        - $ref: '#/components/schemas/ProjectFields'
+        - type: object
+          properties:
+            version:
+              type: 'null'
+              description: Campo reservado; omitir na criação. Apenas null é tolerado.
+      unevaluatedProperties: false
+      example: { name: Demonstração, description: Dados fictícios. }
+    Project:
       type: object
-      additionalProperties: false
-      required: [page, pageSize, totalItems, totalPages]
+      required: [id, name, description, ownerUserId, currentRole, version, createdAt, progress]
       properties:
-        page:
-          type: integer
-          minimum: 1
-        pageSize:
-          type: integer
-          minimum: 1
-          maximum: 100
-        totalItems:
-          type: integer
-          minimum: 0
-        totalPages:
-          type: integer
-          minimum: 0
-          description: Teto de totalItems/pageSize; 0 quando não há tarefas.
-    Progress:
+        id: { $ref: '#/components/schemas/Id' }
+        name: { type: string }
+        description: { type: string }
+        ownerUserId: { $ref: '#/components/schemas/Id' }
+        currentRole: { type: string, enum: [MANAGER, MEMBER] }
+        version: { $ref: '#/components/schemas/Version' }
+        createdAt: { type: string, format: date-time }
+        progress: { $ref: '#/components/schemas/Progress' }
+    Task:
       type: object
-      additionalProperties: false
-      required: [total, todo, inProgress, done, completedPercent]
-      description: |
-        Contagens globais do projeto, não da página.
-        total = todo + inProgress + done = pagination.totalItems.
-        completedPercent = 100 * done / total, arredondado ao inteiro mais
-        próximo, com meios para cima; se total = 0, percentagem = 0.
-        Estas relações entre campos são invariantes da aplicação.
+      required: [id, projectId, title, description, status, priority, assignees, version, createdAt, updatedAt]
       properties:
-        total: {type: integer, minimum: 0}
-        todo: {type: integer, minimum: 0}
-        inProgress: {type: integer, minimum: 0}
-        done: {type: integer, minimum: 0}
-        completedPercent: {type: integer, minimum: 0, maximum: 100}
+        id: { $ref: '#/components/schemas/Id' }
+        projectId: { $ref: '#/components/schemas/Id' }
+        title: { type: string }
+        description: { type: string }
+        status: { $ref: '#/components/schemas/Status' }
+        priority: { $ref: '#/components/schemas/Priority' }
+        assignees: { type: array, items: { $ref: '#/components/schemas/User' } }
+        version: { $ref: '#/components/schemas/Version' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     TaskPage:
       type: object
-      additionalProperties: false
       required: [project, items, pagination, progress]
       properties:
-        project:
-          $ref: '#/components/schemas/ProjectContext'
-        items:
-          type: array
-          maxItems: 100
-          items:
-            $ref: '#/components/schemas/Task'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-        progress:
-          $ref: '#/components/schemas/Progress'
+        project: { $ref: '#/components/schemas/Project' }
+        items: { type: array, items: { $ref: '#/components/schemas/Task' } }
+        pagination: { $ref: '#/components/schemas/Pagination' }
+        progress: { $ref: '#/components/schemas/Progress' }
+    Comment:
+      type: object
+      required: [id, taskId, author, content, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/Id' }
+        taskId: { $ref: '#/components/schemas/Id' }
+        author: { $ref: '#/components/schemas/User' }
+        content: { type: string }
+        createdAt: { type: string, format: date-time }
     Problem:
       type: object
-      additionalProperties: false
       required: [type, title, status, detail]
-      description: Erro estruturado sem conteúdo sensível, inspirado em Problem Details.
       properties:
-        type: {type: string, format: uri-reference}
-        title: {type: string}
-        status: {type: integer, minimum: 400, maximum: 599}
-        detail: {type: string}
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
         errors:
           type: array
           items:
             type: object
-            additionalProperties: false
             required: [field, message]
             properties:
-              field: {type: string}
-              message: {type: string}
-  responses:
-    BadRequest:
-      description: JSON malformado ou parâmetro de paginação inválido.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: Pedido inválido
-            status: 400
-            detail: Verifique o formato do pedido e os parâmetros.
-    Unauthorized:
-      description: Prova de acesso ausente/inválida ou conta inativa; sem confirmar existência de conta.
-      headers:
-        WWW-Authenticate:
-          schema: {type: string}
-          example: Bearer
-          description: Indicação do esquema de acesso esperado.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: Autenticação necessária
-            status: 401
-            detail: É necessário acesso válido.
-    NotFound:
-      description: |
-        Projeto inexistente OU pessoa sem participação. Mesmo estado e corpo
-        nos dois casos, sem revelar título, participantes ou existência.
-        Não usar 403 para distinguir o projeto alheio nesta operação.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: Recurso indisponível
-            status: 404
-            detail: O recurso não está disponível.
-    ValidationFailed:
-      description: |
-        Corpo JSON bem formado que viola o schema ou as regras de conteúdo,
-        incluindo título acima do limite após normalização ou campo não permitido.
-        Nenhuma tarefa é criada.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: Dados inválidos
-            status: 422
-            detail: Corrija os campos indicados.
-            errors:
-              - field: title
-                message: O título deve ter entre 1 e 200 caracteres após remover espaços das extremidades.
-    InternalError:
-      description: Falha interna; não apresentar detalhes técnicos nem anunciar sucesso.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: Operação não concluída
-            status: 500
-            detail: Não foi possível concluir a operação.
-    Unavailable:
-      description: Dependência necessária indisponível; não devolver dados fictícios como se fossem reais.
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/Problem'
-          example:
-            type: about:blank
-            title: Serviço indisponível
-            status: 503
-            detail: O serviço está temporariamente indisponível.
+              field: { type: string }
+              message: { type: string }

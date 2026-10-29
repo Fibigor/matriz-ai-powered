@@ -1,4 +1,31 @@
-# Matriz — Backlog inicial e critérios de aceitação
+# Matriz — Histórias e critérios de aceitação
+
+## Backlog em vigor — ficha 03
+
+O autor aprovou o âmbito alargado da ficha 03 em 29-10-2026. As histórias seguintes têm prioridade Must e substituem as regras incompatíveis do histórico da ficha 01. Cenários Given/When/Then são critérios de aceitação; a execução observada é registada separadamente em [verification.md](verification.md).
+
+| História | Formulação | Critérios verificáveis |
+|---|---|---|
+| US-01 / RF-01 | Como utilizador ativo, quero iniciar e terminar sessão e consultar o meu perfil, para aceder de forma identificada. | Given credenciais válidas, When entro, Then obtenho sessão e perfil; inválidas ou sem sessão dão 401; escrita sem CSRF dá 403; logout invalida a sessão; reinício não conserva sessão. |
+| US-02 / RF-02 | Como utilizador ativo, quero criar um projeto, para organizar o trabalho. | Given nome válido, When crio, Then o servidor infere-me como gestor e participante; nome só espaços ou acima de 120 é recusado; descrição acima de 2 000 é recusada; dados permanecem após reinício. |
+| US-03 / RF-03 | Como participante, quero listar/pesquisar os meus projetos e consultar o detalhe, para encontrar o trabalho autorizado. | Given projetos próprios e alheios, When pesquiso pelo nome, Then só os acessíveis aparecem; nomes repetidos não confundem identidades; paginação válida; projeto alheio e inexistente dão a mesma indisponibilidade. |
+| US-04 / RF-04 | Como gestor, quero gerir membros do projeto, para controlar colaboração. | Given conta ativa existente, When adiciono duas vezes, Then há uma participação; membro não gere membros; gestor não pode ser removido; atribuições existentes bloqueiam remoção; removido deixa de ter acesso na API. |
+| US-05 / RF-05 | Como participante, quero criar/consultar tarefas persistidas, para tornar visível o trabalho. | Given título válido, When crio, Then a tarefa aparece uma única vez sem reload, em TODO e sem responsáveis, prioridade MEDIUM por omissão; permanece após reload/reinício. Espaços, 201 pontos de código ou descrição acima de 2 000 são recusados sem perder o formulário. |
+| US-06 / RF-06 | Como participante, quero editar a tarefa, para manter o trabalho atualizado. | Given versão atual, When guardo dados válidos, Then ficam persistidos e aumenta a versão; versão antiga dá 409 sem sobreposição; estado/prioridade fora do enum são recusados; falha não anuncia sucesso. |
+| US-07 / RF-07 | Como gestor, quero associar vários responsáveis elegíveis, para partilhar a execução. | Given dois participantes ativos, When os atribuo, Then ambos aparecem; repetir associação não duplica; pessoa fora do projeto/inativa é recusada; membro não gere atribuições; retirar uma associação mantém as restantes. |
+| US-08 / RF-08 | Como participante, quero atualizar estado/prioridade, para comunicar evolução e urgência. | Given tarefa concluída, When reabro, Then deixa de contar como concluída; concluir sem responsável é permitido; filtros TODO/IN_PROGRESS/DONE e LOW/MEDIUM/HIGH mostram só correspondências. |
+| US-09 / RF-09 | Como participante, quero acompanhar contagens/progresso, para perceber o trabalho restante. | Given 2 concluídas em 5, Then 40%; 1/8 → 13%, 1/3 → 33%, 2/3 → 67%; sem tarefas → 0% e indicação de vazio. Agregados não mudam com página/filtro e atualizam após operações. |
+| US-10 / RF-10 | Como gestor, quero editar/eliminar um projeto, e como participante eliminar tarefas, para corrigir o contexto de trabalho. | Given confirmação na interface e versão atual, When elimino projeto/tarefa autorizado, Then dependentes são removidos sem órfãos; cancelar a confirmação não envia eliminação; membro não elimina projeto; versões antigas dão 409. |
+| US-11 / RF-11 | Como participante, quero comentar tarefas, para partilhar informação com a equipa. | Given conteúdo válido, When comento, Then autor/data são do servidor e permanecem após reload/reinício; conteúdo só espaços ou acima de 2 000 é recusado; não aceitar autor forjado do cliente. |
+
+### Exceções transversais
+
+Sessão expirada encaminha para login; erro recuperável conserva texto; durante submissão não são enviados pedidos repetidos. Nova tarefa pode não corresponder aos filtros ativos: manter os filtros e explicar o resultado, sem fingir que foi inserida no conjunto filtrado. Quando corresponde, apresentar a página onde foi inserida na ordenação estável. Comentários novos ficam visíveis na última página.
+
+Nomes/títulos de 120/200 pontos de código e descrições com 2 000 são aceites; contagem é Unicode, não bytes nem unidades UTF-16. Comentários e atribuições não conferem acesso fora da participação no projeto.
+
+<details>
+<summary>Histórico da ficha 01 — histórias iniciais; responsabilidade única e exclusões substituídas pelo backlog acima</summary>
 
 ## Estado e convenções
 
@@ -133,3 +160,5 @@ Prioridade: Must. Rastreabilidade: RF-09, RN-08, RN-09, RNF-01.
 - **AC-09.6:** Given tarefas em vários projetos, When se consulta o progresso de um deles, Then só as tarefas desse projeto são contadas, independentemente da página de tarefas apresentada.
 
 Limitação: a percentagem não representa esforço estimado, horas consumidas nem desempenho de uma pessoa.
+
+</details>

@@ -1,5 +1,87 @@
 # Matriz — Modelo lógico de dados e diagrama ER
 
+## Modelo implementado — ficha 03
+
+PostgreSQL 17, migration Flyway `backend/src/main/resources/db/migration/V1__initial_schema.sql`. A implementação usa os nomes físicos abaixo. Este modelo substitui o responsável único e a ausência de credenciais/comentários/prioridade do desenho inicial.
+
+| Tabela | Atributos e regras principais |
+|---|---|
+| `app_user` | id opaco, username único, display_name, password_hash BCrypt e active; contas locais fictícias, sem API pública de registo. |
+| `project` | id, name 1–120, description até 2 000, owner_user_id, version positiva, created_at UTC. Proprietário é gestor por projeto. |
+| `participation` | PK composta (project_id,user_id), joined_at; inclui gestor. FK composta diferível do projeto obriga o gestor a participar. |
+| `task` | id, project_id fixo, title 1–200, description até 2 000, status, priority, version, created_at e updated_at. Inicial TODO/MEDIUM, versão 1. |
+| `task_assignment` | PK (task_id,user_id), project_id e assigned_at; FK composta para tarefa/projeto e participação/projeto. Zero ou vários responsáveis. |
+| `task_comment` | id, task_id, author_id, content 1–2 000, created_at; autor e data do servidor. |
+
+```mermaid
+erDiagram
+    APP_USER ||--o{ PROJECT : gere
+    APP_USER ||--o{ PARTICIPATION : participa
+    PROJECT ||--|{ PARTICIPATION : inclui
+    PROJECT ||--o{ TASK : contem
+    TASK ||--o{ TASK_ASSIGNMENT : tem
+    PARTICIPATION ||--o{ TASK_ASSIGNMENT : recebe
+    TASK ||--o{ TASK_COMMENT : tem
+    APP_USER ||--o{ TASK_COMMENT : escreve
+    APP_USER {
+        string id PK
+        string username UK
+        string display_name
+        string password_hash
+        boolean active
+    }
+    PROJECT {
+        string id PK
+        string name
+        string description
+        string owner_user_id FK
+        bigint version
+        datetime created_at
+    }
+    PARTICIPATION {
+        string project_id PK, FK
+        string user_id PK, FK
+        datetime joined_at
+    }
+    TASK {
+        string id PK
+        string project_id FK
+        string title
+        string description
+        string status
+        string priority
+        bigint version
+        datetime created_at
+        datetime updated_at
+    }
+    TASK_ASSIGNMENT {
+        string task_id PK, FK
+        string user_id PK, FK
+        string project_id FK
+        datetime assigned_at
+    }
+    TASK_COMMENT {
+        string id PK
+        string task_id FK
+        string author_id FK
+        string content
+        datetime created_at
+    }
+```
+
+Uma atribuição refere exatamente uma participação do mesmo projeto. Não guardar `assignee_user_id` em task: o DTO atual contém uma lista `assignees`. A referência ao autor do comentário é a utilizador, não a participação, para preservar autoria após remoção de membro. A conta não é eliminada pela API.
+
+Projeto/tarefas podem ser eliminados com dependentes por cascata transacional, conforme autorização da ficha 03. A remoção isolada de participação continua bloqueada por atribuições, incluindo concluídas; proprietário não pode ser removido. Verificar conta ativa na atribuição — FKs não garantem essa regra.
+
+O código valida pontos de código Unicode e espaços antes da escrita; PostgreSQL impõe limites de coluna, unicidade, enums e FKs adicionais. As edições comparam versão atomicamente; o bloqueio de projeto serializa escritas de participação/atribuição/tarefas. Contagens e progresso são derivados, nunca guardados como verdade duplicada.
+
+O seed opt-in usa uma transação e lock de inicialização; se a conta de demonstração inicial já existe, não reinicializa dados nem palavras-passe. Migrations têm histórico de checksums Flyway e não recriam o schema em cada arranque.
+
+Rastreabilidade: app_user → RF-01; project/participation → RF-02/03/04/10; task → RF-05/06/08/09/10; task_assignment → RF-07; task_comment → RF-11. Datas são instantes com timezone, representadas em UTC no contrato.
+
+<details>
+<summary>Modelo lógico da ficha 02 — histórico; cardinalidade de responsável e proibição de eliminações foram substituídas</summary>
+
 ## 1. Estado e princípios
 
 Exercício 2 da ficha 02. Modelo lógico proposto para o [MVP](requirements.md), alinhado com a [arquitetura](architecture.md). Não existe base de dados criada, SQL, migrations ou motor escolhido.
@@ -107,3 +189,5 @@ Paginação e agregados do GET devem refletir o mesmo retrato consistente. `tota
 USER suporta RF-01; PROJECT e a propriedade suportam RF-02/RF-03; PROJECT_PARTICIPATION suporta RF-04 e a autorização transversal; TASK suporta RF-05/RF-06/RF-07/RF-08; a consulta derivada suporta RF-09.
 
 Ficam por confirmar com o cliente cardinalidades, permissões e limites de conteúdo. Identidade, estratégia física de integridade, índices, retenção, eliminação administrativa e recuperação aguardam decisões técnicas e de negócio. Não foram criadas entidades especulativas para resolver necessidades ainda não aprovadas.
+
+</details>

@@ -1,5 +1,26 @@
 # Matriz — Restrições, pressupostos e validação crítica
 
+## Restrições em vigor — ficha 03
+
+O autor aprovou implementar a ficha 03 em 29-10-2026, incluindo Java 21/Spring Boot, React/TypeScript, PostgreSQL, sessões com CSRF e BCrypt, dependências Maven/npm, imagens Docker oficiais e execução local. A decisão mantém monólito modular e autoriza os ficheiros/componentes de [implementation-plan.md](implementation-plan.md).
+
+Diferenças face às fichas anteriores resolvidas explicitamente: responsabilidade N:M, comentários, prioridade, pesquisa/filtros e CRUD completo de projetos/tarefas passam a fazer parte do âmbito. Eliminações de dados de demonstração são operações do produto, com confirmação na interface e dependências removidas atomicamente. Os limites de nome/título/descrição anteriores mantêm-se.
+
+Permissões: gestor gere projeto, membros e atribuições; participantes ativos gerem tarefas e comentam. Remoção de membro com atribuições continua bloqueada. Eliminação do projeto inclui os seus dependentes, não contas. Elegibilidade obtida da participação atual; não há diretório público de utilizadores.
+
+O seed é opt-in, com contas fictícias e hashes de palavras-passe; não apaga/redefine dados no arranque. A configuração `.env.example` contém apenas valores de demonstração públicos. `.env`, artefactos de build, bases de dados e dependências não devem ser versionados.
+
+Continuam proibidos sem nova aprovação: commit, push, deploy público, eliminação de volumes/dados existentes e alteração do staging. As eliminações staged anteriores são preservadas, mesmo que não representem a intenção final de entrega; o autor deve revê-las antes de versionar.
+
+`main` está em `d1edc51` (Architecture Pack). Esta branch permanece em `c13da97`; não foi feita integração/rebase da branch nem inferida aprovação para corrigir o índice.
+
+Questões Q-01 a Q-07 e Q-10 foram decididas para a demonstração nas regras em vigor de `requirements.md`; não se declaram validadas pelo cliente. Q-08/Q-09 permanecem pendentes: escala/SLA, retenção, jurisdição, acessibilidade, backups e conformidade. Identidade empresarial e endurecimento de segurança continuam necessários antes de produção. Sessões locais são a escolha para o exercício, não uma decisão corporativa.
+
+O histórico abaixo regista as restrições de fases sem código; não invalida a autorização posterior de implementação. A revisão atual e resultados estão em [verification.md](verification.md).
+
+<details>
+<summary>Histórico das fichas 01 e 02 — não aplicar as antigas proibições de implementação ao âmbito aprovado da ficha 03</summary>
+
 ## 1. Factos confirmados pelo enunciado
 
 | ID | Facto | Fonte |
@@ -144,3 +165,5 @@ Na simulação textual, o resultado esperado é manter as regras do projeto, ext
 - Rever alterações e registos de ferramentas sem guardar dados confidenciais; testar tentativas de desvio em ambiente controlado.
 
 O `AGENTS.md` orienta o comportamento, mas permissões técnicas e supervisão continuam necessárias.
+
+</details>

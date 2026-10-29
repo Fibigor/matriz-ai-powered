@@ -1,0 +1,35 @@
+# Ficha 03 — Plano de implementação
+
+## Decisões validadas pelo autor
+
+Em 29-10-2026 o autor aprovou o âmbito integral da ficha 03, substituindo as exclusões da ficha 02: comentários, prioridade, pesquisa/filtros, edição/eliminação de projetos/tarefas e vários responsáveis. Escolheu Java 21, Spring Boot, React e PostgreSQL, mantendo o monólito modular.
+
+O gestor gere o projeto, os membros e as atribuições. Todos os participantes ativos criam, editam e eliminam tarefas e comentam. Responsáveis são participantes ativos do mesmo projeto. A eliminação confirmada remove os dependentes numa transação. Permanecem os limites aprovados: projeto 1–120, tarefa 1–200 e descrições até 2 000 pontos de código após normalização de nome/título.
+
+Aprovados: sessão HttpOnly e CSRF com Spring Security, BCrypt, dados fictícios, dependências Maven/npm, imagens Docker oficiais e serviços locais. Não aprovados: commit, push, deploy público, eliminação de dados existentes ou alteração do staging. `main` está em `d1edc51` (Architecture Pack); esta worktree continua em `feature/ficha-pratica-1`, baseada em `c13da97`, com o staging anterior preservado.
+
+## Incrementos e verificações
+
+| Incremento | Componentes previstos | Aceitação e verificação | Estado |
+|---|---|---|---|
+| 1 — Base e persistência | `backend/pom.xml`, aplicação/configuração, migration Flyway, seed opt-in, `.env.example`, `compose.yaml`, Dockerfile | Arranque com PostgreSQL; migration reproduzível; seed sem apagar dados; nenhum segredo real no repositório. | Verificado localmente |
+| 2 — Identidade e projetos | Módulos `identity`, `projects`, segurança e erros comuns | Login, perfil, logout, CSRF, autorização direta; CRUD/pesquisa/paginação de projetos e membros. | Verificado localmente |
+| 3 — Tarefas e colaboração | Módulo `tasks`, validação partilhada e versão otimista | CRUD, filtros, prioridade, vários responsáveis sem duplicados, comentários com autor/data do servidor; integridade e concorrência. | Verificado localmente |
+| 4 — Interface | `frontend/` React/TypeScript/Vite, cliente API e estilos | Cinco vistas ligadas à API, carregamento/vazio/erro/sucesso, formulários preservados e sem duplicação, layout adaptável. | Verificado localmente |
+| 5 — Entrega | Testes backend/frontend, `docs/verification.md`, documentação e OpenAPI | Pelo menos validação, autorização e criação/consulta persistida; build e percurso real; evidência e limitações sem inventar resultados. | Verificações locais concluídas; commit/entrega Git pendentes de aprovação |
+
+Cada incremento é analisado e verificado antes do seguinte. O plano pode ser ajustado com evidência, sem alargar o âmbito autorizado. A revisão crítica final e qualquer refatoração separada são registadas em `verification.md`. Os exemplos de bugs dos anexos são cenários de teste, não bugs observados neste projeto.
+
+## Ficheiros e limites
+
+Criar `backend/` com código Java, SQL e testes; `frontend/` com código React, testes e manifests; configuração Docker e exemplo de ambiente. Atualizar requisitos, histórias, restrições, arquitetura, dados, API, README e AGENTS; manter o wireframe da ficha 02 identificado como referência histórica. Não alterar `.idea` nem o índice Git.
+
+Identidade local e seed servem exclusivamente a demonstração. Registo público, recuperação de palavra-passe, anexos, notificações, sprints e operação de produção permanecem fora do âmbito. Não há migração de dados de uma aplicação anterior, porque não existia implementação.
+
+## Fecho das verificações
+
+Em 29-10-2026: 7 testes Java, 7 testes de componentes e 2 E2E passaram; frontend compilado e aplicação completa construída/iniciada em Docker. Projeto, tarefa, comentário e responsável sobreviveram a reinício real; sessão antiga deixou de ser válida. Dependências de desenvolvimento corrigidas com aprovação adicional; `npm audit` completo sem alertas na execução final.
+
+O contrato documenta 21 operações; foram verificados YAML, 99 referências, parâmetros de caminho e estrutura de oito respostas reais de leitura. Não foi instalado/executado um validador integral de OpenAPI. O relatório distingue esta limitação de testes funcionais bem-sucedidos.
+
+O autor autorizou parar os serviços locais no final, sem apagar o volume. Não se autorizou commit/push nem alteração do índice. O requisito de versionar a entrega da ficha 03 permanece pendente e não pode ser satisfeito por um clone da branch atual até o autor preparar e aprovar o commit.

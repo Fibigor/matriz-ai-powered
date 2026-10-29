@@ -1,5 +1,48 @@
 # Matriz — Requisitos e âmbito funcional
 
+## Especificação em vigor — ficha 03
+
+Em 29-10-2026 o autor aprovou implementar integralmente o âmbito da ficha 03 e as regras abaixo. Esta secção substitui as exclusões e a responsabilidade única da ficha 01; o levantamento original é conservado no histórico no final, não é uma segunda especificação em vigor. Não se presume validação com o cliente ou autorização de produção.
+
+Stack escolhida: Java 21/Spring Boot, React/TypeScript e PostgreSQL, monólito modular. A demonstração usa contas locais com hashes BCrypt e sessões protegidas por CSRF; sem registo público ou recuperação de palavra-passe.
+
+| ID atual | Requisito | Prioridade |
+|---|---|---|
+| RF-01 | Iniciar sessão, consultar perfil e terminar sessão; recusar conta inativa e credenciais inválidas. | Must |
+| RF-02 | Criar projetos com proprietário inferido da sessão. | Must |
+| RF-03 | Listar, pesquisar pelo nome e consultar apenas projetos acessíveis, com paginação. | Must |
+| RF-04 | Gestor adiciona/remove membros existentes por identificador exato; participantes consultam os membros. | Must |
+| RF-05 | Criar/listar/consultar tarefas persistidas, com paginação e filtros por estado e prioridade. | Must |
+| RF-06 | Participantes editam título, descrição, estado e prioridade com controlo de versão. | Must |
+| RF-07 | Gestor associa zero ou vários participantes ativos à tarefa, sem duplicados, e remove atribuições. | Must |
+| RF-08 | Transições livres entre TODO, IN_PROGRESS e DONE, incluindo reabertura e conclusão sem responsáveis. | Must |
+| RF-09 | Painel e projeto apresentam contagens globais e percentagem concluída, independentes da página/filtros. | Must |
+| RF-10 | Gestor edita/elimina projetos; participantes eliminam tarefas; confirmar eliminação na interface. | Must |
+| RF-11 | Participantes adicionam/listam comentários com autor autenticado e data do servidor. | Must |
+
+### Regras em vigor
+
+- **RN-01:** conta ativa e participação verificadas no servidor em cada operação. Projeto alheio e inexistente não são distinguíveis (404). Participante sem permissão de gestão recebe 403. Não confiar em botões escondidos.
+- **RN-02:** nome de projeto 1–120 e título de tarefa 1–200 pontos de código Unicode após remover espaços nas extremidades; descrições opcionais até 2 000, sem truncagem. Nomes repetidos são permitidos.
+- **RN-03:** criador é o único gestor e participa no projeto; não há promoção, transferência ou remoção do gestor. Só gestor gere projeto, membros e atribuições. Qualquer conta ativa pode criar projeto.
+- **RN-04:** membros sem atribuições podem ser removidos; atribuições de tarefas concluídas também bloqueiam remoção. Remoção retira acesso nas operações seguintes. Adição repetida não duplica participação.
+- **RN-05:** tarefa pertence a um projeto fixo; estado inicial TODO, prioridade inicial MEDIUM, sem responsáveis. Prioridades LOW/MEDIUM/HIGH. Participantes podem criar, editar e eliminar qualquer tarefa do projeto.
+- **RN-06:** tarefa admite zero ou vários responsáveis. Só participantes ativos do mesmo projeto são elegíveis; o par tarefa/utilizador é único. Atribuição inválida preserva o estado anterior.
+- **RN-07:** transições livres entre os três estados; não exigir passagem por estado intermédio ou atribuição para concluir.
+- **RN-08:** progresso global: 100 vezes concluídas/total, arredondamento inteiro com meios para cima; projeto sem tarefas apresenta 0% e “Sem tarefas”. Filtros afetam resultados/paginação, não os agregados globais.
+- **RN-09:** operações transacionais; nenhuma falha é anunciada como sucesso. Edições de projeto/tarefa e alterações de atribuição exigem versão atual, caso contrário 409. Atribuição repetida é idempotente quando a versão é atual. Falha de transporte pode deixar resultado incerto; não repetir escritas automaticamente.
+- **RN-10:** eliminar tarefa remove comentários/atribuições; eliminar projeto remove também tarefas/participações. Só remover após confirmação humana na interface. Não eliminar contas por esta API.
+- **RN-11:** comentários têm 1–2 000 pontos de código após remoção de espaços nas extremidades, autor/data definidos no servidor; conteúdo tratado como texto. Não há edição/eliminação de comentário isolado no MVP.
+
+### Qualidade e exclusões
+
+Mantêm-se RNF-01 a RNF-06 do levantamento inicial: autorização direta, persistência, validação com texto conservado, teclado/rótulos/estados textuais, minimização de dados e concorrência sem perda silenciosa. São demonstrados nos testes da ficha 03, sem alegar conformidade integral de acessibilidade.
+
+Sem notificações, anexos, sprints, integrações, registo público ou relatórios avançados. Retenção, identidade empresarial, backups, metas de escala/disponibilidade, segurança e obrigações legais de produção continuam pendentes. Documentar resultados reais em [verification.md](verification.md).
+
+<details>
+<summary>Histórico da ficha 01 — levantamento inicial e exercício de prompts; âmbito substituído acima</summary>
+
 ## 1. Origem, estado e convenções
 
 Este documento responde aos exercícios 1, 2 e 4 da Ficha Prática Laboratorial 01. A ferramenta utilizada é o GitHub Copilot. Não existe implementação.
@@ -163,3 +206,5 @@ Não se atribuem respostas ao cliente. As hipóteses usadas nos exercícios segu
 O pedido simples favorece uma resposta extensa mas mistura descoberta, desenho e implementação, introduzindo funcionalidades sem justificação. A estrutura Goal → Context → Constraints → Task → Validation delimita o papel da IA, torna explícitas as lacunas e permite rejeitar uma resposta que invente decisões.
 
 Um prompt estruturado reduz ambiguidades, mas não garante correção nem substitui validação humana. Esta comparação foi elaborada numa sessão com os materiais já disponíveis, não em duas conversas novas e isoladas. Logo, não demonstra experimentalmente a influência exclusiva do prompt: contexto prévio e variabilidade do modelo podem influenciar o resultado. Para reproduzir literalmente a Parte A da ficha, executar os dois prompts em conversas novas, com a mesma ferramenta e contexto inicial, e comparar as respostas reais com esta grelha.
+
+</details>

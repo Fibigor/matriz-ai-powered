@@ -1,4 +1,43 @@
-# Matriz — Architecture Pack da ficha 02
+# Matriz — Arquitetura das fichas 02 e 03
+
+## Arquitetura implementada — ficha 03
+
+Decisões aprovadas pelo autor em 29-10-2026: monólito modular mantido; Java 21/Spring Boot 3.5, React/TypeScript/Vite, PostgreSQL 17 e Flyway. JDBC é usado com parâmetros preparados; não há ORM, serviços distribuídos ou persistência em memória.
+
+| Componente | Implementação e responsabilidade |
+|---|---|
+| Interface | `frontend/src/App.tsx`, `Projects.tsx`, `Tasks.tsx`: login, painel, projetos, detalhe de projeto/tarefa; cliente `api.ts` e estados comuns em `ui.tsx`. |
+| Identidade | `backend/.../identity`: Spring Security, BCrypt 12, login form-urlencoded, sessão no servidor, perfil e logout. Conta ativa verificada em cada operação de negócio. |
+| Projetos | `backend/.../projects`: propriedade, participação, CRUD, pesquisa, paginação, autorização e contagens globais. |
+| Tarefas | `backend/.../tasks`: CRUD, estado/prioridade, filtros, atribuições N:M e comentários, com autorização pelo contrato interno do módulo projetos. |
+| Transversal | `backend/.../common`: DTOs tipados, erros Problem Details, validação Unicode e paginação. |
+| Persistência | Migration Flyway e PostgreSQL com FKs/restrições; transações locais, bloqueio de projeto nas escritas e versão otimista. |
+| Entrega | Dockerfile multi-stage compila React e inclui o resultado no JAR. Compose executa aplicação e PostgreSQL com volume persistente. Vite separado apenas em desenvolvimento. |
+
+### Identidade e ciclo de acesso
+
+O Bearer preliminar da ficha 02 foi substituído, com autorização do autor, por sessão Spring Security: cookie HttpOnly/SameSite Strict, sessão renovada no login, expiração inativa de 30 minutos, invalidação no logout. `COOKIE_SECURE=true` é obrigatório com HTTPS fora da demonstração local. O frontend usa mesma origem/proxy; não há CORS aberto, localStorage com segredos ou identidade inferida de valores enviados pelo cliente.
+
+`GET /api/auth/csrf` fornece token; `X-CSRF-TOKEN` protege login e todas as escritas. O cliente obtém token atual antes de cada escrita, incluindo após login/logout. O backend obtém proprietário e autor do Principal; nunca aceita esses campos como prova de identidade.
+
+### Dados, autorização e consistência
+
+Todas as escritas de um projeto bloqueiam a respetiva linha durante a transação. A autorização é verificada no mesmo contexto da gravação; isso serializa remoções/atribuições concorrentes. Recursos alheios/inexistentes recebem 404, membros sem gestão recebem 403. Sessões não armazenam permissões por projeto em cache.
+
+Edições de projeto/tarefa exigem versão; tarefas também a exigem nas atribuições e eliminações. FKs asseguram pertença ao mesmo projeto e unicidade. Projeto tem participação do gestor assegurada por FK composta diferível. Eliminações confirmadas removem dependentes na transação; falha reverte o conjunto.
+
+Listagens de projetos/tarefas usam retrato `REPEATABLE_READ`; o progresso conta todas as tarefas do projeto, não a página ou filtros. `pagination.totalItems` de tarefas conta o subconjunto filtrado, portanto pode diferir de `progress.total`. Ordenação: criação ascendente e id ascendente.
+
+Frontend desativa a submissão e tem guarda síncrona contra duplicados; conserva texto em falhas e atualiza dados após resposta confirmada. Uma falha de transporte não prova rollback: é apresentada incerteza e não há repetição automática de escritas.
+
+### Revisão e limites
+
+API completa da demonstração em [openapi.yaml](../openapi.yaml); plano/resultados em [implementation-plan.md](implementation-plan.md) e [verification.md](verification.md). O wireframe da ficha 02 é histórico; interface real inclui prioridade, responsáveis múltiplos e comentários.
+
+Continuam fora do âmbito registo público, recuperação de palavra-passe, anexos, notificações, sprints e operação pública. Não foram assumidas escalabilidade ou conformidade. Não se reivindica certificação de segurança; políticas corporativas, limitação de tentativas, HTTPS, logs/monitorização e recuperação devem ser tratados antes de produção.
+
+<details>
+<summary>Architecture Pack original da ficha 02 — preservado como histórico; contrato parcial e responsável único foram substituídos</summary>
 
 ## 1. Contexto e estado
 
@@ -136,3 +175,5 @@ Limitações: as verificações locais de OpenAPI são estruturais e dos exemplo
 Checklist: arquitetura justificada, modelo/ER, duas operações OpenAPI, wireframe e pressupostos estão documentados; a triagem crítica foi aceite pelo autor. Permanecem necessárias revisão integral pelo responsável e validação com o cliente.
 
 Permanecem pendentes: validação humana final, questões do cliente, stack, SGBD, identidade, contratos restantes, medições de escala e estratégia de operação. Os novos artefactos só ficam versionados quando houver um commit autorizado; o commit `c13da97` cobre a ficha 01, não esta ficha.
+
+</details>
